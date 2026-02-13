@@ -1,0 +1,62 @@
+{% extends 'events/admin/base.html' %}
+
+{% block title %}Events{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>Events</h2>
+    <div class="header-actions">
+        <a href="{% url 'events:admin-event-create' %}" class="btn btn-primary">+ Create New Event</a>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <a href="{% url 'events:admin-event-list' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+        <a href="{% url 'events:admin-event-list' %}?status=active" class="btn btn-sm {% if status_filter == 'active' %}btn-primary{% else %}btn-secondary{% endif %}">Active</a>
+        <a href="{% url 'events:admin-event-list' %}?status=inactive" class="btn btn-sm {% if status_filter == 'inactive' %}btn-primary{% else %}btn-secondary{% endif %}">Inactive</a>
+    </div>
+    
+    {% if events %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Event Name</th>
+                    <th>Slug</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Photos</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td><strong>{{ event.name }}</strong></td>
+                    <td><code>{{ event.slug }}</code></td>
+                    <td>{{ event.start_time|date:"M j, Y H:i"|default:"—" }}</td>
+                    <td>{{ event.end_time|date:"M j, Y H:i"|default:"—" }}</td>
+                    <td>{{ event.photo_count }}</td>
+                    <td>
+                        {% if event.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'events:admin-event-detail' event.id %}" class="btn btn-primary btn-sm">View</a>
+                            <a href="{% url 'events:admin-event-edit' event.id %}" class="btn btn-info btn-sm">Edit</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color: var(--text-light);">No events found. <a href="{% url 'events:admin-event-create' %}">Create your first event</a>!</p>
+    {% endif %}
+</div>
+{% endblock %}

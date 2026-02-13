@@ -1,0 +1,95 @@
+{% extends 'events/admin/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>Dashboard</h2>
+    <p style="color: var(--text-light);">Welcome back! Here's an overview of your events.</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_events }}</div>
+        <div class="stat-label">Total Events</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ active_events }}</div>
+        <div class="stat-label">Active Events</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_photos }}</div>
+        <div class="stat-label">Total Photos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ running_events }}</div>
+        <div class="stat-label">Running Now</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ upcoming_events }}</div>
+        <div class="stat-label">Upcoming</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ past_events }}</div>
+        <div class="stat-label">Past Events</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Events</h3>
+        <a href="{% url 'events:admin-event-list' %}" class="btn btn-primary btn-sm">View All</a>
+    </div>
+    {% if events_with_stats %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Event Name</th>
+                    <th>Slug</th>
+                    <th>Photos</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events_with_stats %}
+                <tr>
+                    <td><strong>{{ event.name }}</strong></td>
+                    <td><code>{{ event.slug }}</code></td>
+                    <td>{{ event.photo_count }}</td>
+                    <td>
+                        {% if event.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'events:admin-event-detail' event.id %}" class="btn btn-primary btn-sm">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color: var(--text-light);">No events yet. <a href="{% url 'events:admin-event-create' %}">Create your first event</a>!</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Photos</h3>
+    </div>
+    {% if recent_photos %}
+        <div class="photo-grid">
+            {% for photo in recent_photos %}
+            <div class="photo-item">
+                <img src="{{ photo.image.url }}" alt="Photo from {{ photo.event.name }}">
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: var(--text-light);">No photos uploaded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

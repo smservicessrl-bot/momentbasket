@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Momentbasket · Rögzítsd és Oszd Meg az Esemény Pillanatait</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg-gradient: linear-gradient(135deg, #f9e0ff 0%, #c8f5ff 50%, #ffe4d6 100%);
+            --card-bg: rgba(255, 255, 255, 0.82);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --text-primary: #2b2d42;
+            --text-muted: #6c7286;
+            --accent: #7254ff;
+            --accent-2: #ff7ca3;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .wrap {
+            width: min(1200px, 92vw);
+            margin: 0 auto;
+            padding: clamp(2rem, 5vw, .5rem) 0;
+        }
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 0;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            letter-spacing: -0.03em;
+            transition: opacity 200ms ease;
+        }
+        .logo:hover,
+        .logo:focus {
+            opacity: 0.7;
+            outline: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 200ms ease;
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 200ms ease;
+        }
+        .nav-links a:hover,
+        .nav-links a:focus {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+        .nav-links a:hover::after,
+        .nav-links a:focus::after {
+            width: calc(100% - 2rem);
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.25), rgba(255, 124, 163, 0.25));
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+        .btn-icon {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            background: currentColor;
+            mask-size: contain;
+            mask-repeat: no-repeat;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            opacity: 0.9;
+        }
+        .btn-icon.icon-phone {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='2' width='14' height='20' rx='2' ry='2'/%3E%3Cline x1='12' y1='18' x2='12.01' y2='18'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='2' width='14' height='20' rx='2' ry='2'/%3E%3Cline x1='12' y1='18' x2='12.01' y2='18'/%3E%3C/svg%3E");
+        }
+        .btn-primary:hover,
+        .btn-primary:focus {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.35), rgba(255, 124, 163, 0.35));
+            box-shadow: 0 15px 25px -18px rgba(43, 45, 66, 0.4);
+            outline: none;
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            transition: transform 160ms ease, box-shadow 160ms ease;
+        }
+        .btn-secondary:hover,
+        .btn-secondary:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -18px rgba(43, 45, 66, 0.3);
+            outline: none;
+        }
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: clamp(3rem, 8vw, 6rem) 0;
+            margin-bottom: clamp(4rem, 10vw, 6rem);
+        }
+        .hero h1 {
+            margin: 0 0 1.5rem;
+            font-weight: 700;
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+        .hero .tagline {
+            margin: 0 auto 2.5rem;
+            max-width: 680px;
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        /* Section Styles */
+        section {
+            margin-bottom: clamp(4rem, 8vw, 6rem);
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .section-header h2 {
+            margin: 0 0 1rem;
+            font-weight: 700;
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            letter-spacing: -0.02em;
+        }
+        .section-header p {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        .feature-card {
+            position: relative;
+            padding: 2.5rem 2rem;
+            border-radius: 22px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 30px 60px -35px rgba(70, 38, 107, 0.45);
+            backdrop-filter: blur(18px);
+            transition: transform 200ms ease, box-shadow 200ms ease;
+            text-align: center;
+        }
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(130deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 200ms ease;
+            pointer-events: none;
+        }
+        .feature-card:hover,
+        .feature-card:focus-within {
+            transform: translateY(-8px);
+            box-shadow: 0 35px 70px -40px rgba(49, 34, 97, 0.55);
+        }
+        .feature-card:hover::before,
+        .feature-card:focus-within::before {
+            opacity: 1;
+        }
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.1), rgba(255, 124, 163, 0.1));
+            position: relative;
+        }
+        .feature-icon::before {
+            content: '';
+            width: 32px;
+            height: 32px;
+            background: currentColor;
+            mask-size: contain;
+            mask-repeat: no-repeat;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            color: var(--accent);
+        }
+        .icon-upload::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E");
+        }
+        .icon-gallery::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E");
+        }
+        .icon-qr::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='5' height='5'/%3E%3Crect x='16' y='3' width='5' height='5'/%3E%3Crect x='3' y='16' width='5' height='5'/%3E%3Cpath d='M21 16v-3'/%3E%3Cpath d='M16 21h3'/%3E%3Cpath d='M21 12v-1'/%3E%3Cpath d='M12 21h1'/%3E%3Cpath d='M12 8v4'/%3E%3Cpath d='M8 12h4'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='5' height='5'/%3E%3Crect x='16' y='3' width='5' height='5'/%3E%3Crect x='3' y='16' width='5' height='5'/%3E%3Cpath d='M21 16v-3'/%3E%3Cpath d='M16 21h3'/%3E%3Cpath d='M21 12v-1'/%3E%3Cpath d='M12 21h1'/%3E%3Cpath d='M12 8v4'/%3E%3Cpath d='M8 12h4'/%3E%3C/svg%3E");
+        }
+        .icon-settings::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24'/%3E%3C/svg%3E");
+        }
+        .icon-palette::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='13.5' cy='6.5' r='.5' fill='currentColor'/%3E%3Ccircle cx='17.5' cy='10.5' r='.5' fill='currentColor'/%3E%3Ccircle cx='8.5' cy='7.5' r='.5' fill='currentColor'/%3E%3Ccircle cx='6.5' cy='12.5' r='.5' fill='currentColor'/%3E%3Cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='13.5' cy='6.5' r='.5' fill='currentColor'/%3E%3Ccircle cx='17.5' cy='10.5' r='.5' fill='currentColor'/%3E%3Ccircle cx='8.5' cy='7.5' r='.5' fill='currentColor'/%3E%3Ccircle cx='6.5' cy='12.5' r='.5' fill='currentColor'/%3E%3Cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z'/%3E%3C/svg%3E");
+        }
+        .icon-server::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='8' rx='2' ry='2'/%3E%3Crect x='2' y='14' width='20' height='8' rx='2' ry='2'/%3E%3Cline x1='6' y1='6' x2='6.01' y2='6'/%3E%3Cline x1='6' y1='18' x2='6.01' y2='18'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='8' rx='2' ry='2'/%3E%3Crect x='2' y='14' width='20' height='8' rx='2' ry='2'/%3E%3Cline x1='6' y1='6' x2='6.01' y2='6'/%3E%3Cline x1='6' y1='18' x2='6.01' y2='18'/%3E%3C/svg%3E");
+        }
+        .icon-phone::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='2' width='14' height='20' rx='2' ry='2'/%3E%3Cline x1='12' y1='18' x2='12.01' y2='18'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='2' width='14' height='20' rx='2' ry='2'/%3E%3Cline x1='12' y1='18' x2='12.01' y2='18'/%3E%3C/svg%3E");
+        }
+        .icon-check::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+        }
+        .icon-message::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+        }
+        .icon-mail::before {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/%3E%3Cpolyline points='22,6 12,13 2,6'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/%3E%3Cpolyline points='22,6 12,13 2,6'/%3E%3C/svg%3E");
+        }
+        .feature-card h3 {
+            margin: 0 0 1rem;
+            font-size: 1.5rem;
+            font-weight: 650;
+            letter-spacing: -0.01em;
+        }
+        .feature-card p {
+            margin: 0;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        /* How It Works */
+        .process-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            margin-bottom: 4rem;
+        }
+        .process-step {
+            text-align: center;
+            padding: 0;
+        }
+        .process-step-image {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 1.5rem;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px -25px rgba(43, 45, 66, 0.4);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            aspect-ratio: 9 / 16;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: transform 200ms ease, box-shadow 200ms ease;
+        }
+        .process-step-image:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 25px 60px -20px rgba(43, 45, 66, 0.5);
+        }
+        .process-step-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .process-step-image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.1), rgba(255, 124, 163, 0.1));
+            color: var(--text-muted);
+            padding: 2rem;
+        }
+        .process-step-image-placeholder .feature-icon {
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.15), rgba(255, 124, 163, 0.15));
+        }
+        .process-step-image-placeholder .feature-icon::before {
+            color: var(--accent);
+        }
+        .process-step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.25), rgba(255, 124, 163, 0.25));
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+        .process-step h3 {
+            margin: 0 0 0.75rem;
+            font-size: 1.3rem;
+            font-weight: 650;
+        }
+        .process-step p {
+            margin: 0;
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .process-arrow {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 2rem;
+            padding: 1rem;
+        }
+        @media (min-width: 1024px) {
+            .process-flow {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .process-arrow {
+                display: flex;
+            }
+        }
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: clamp(3rem, 6vw, 5rem) 2rem;
+            border-radius: 28px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 30px 60px -35px rgba(70, 38, 107, 0.45);
+            backdrop-filter: blur(18px);
+        }
+        .cta-section h2 {
+            margin: 0 0 1rem;
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .cta-section p {
+            margin: 0 0 2rem;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        /* Footer */
+        footer {
+            margin-top: clamp(4rem, 8vw, 6rem);
+            padding-top: 3rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 160ms ease;
+        }
+        .footer-links a:hover,
+        .footer-links a:focus {
+            color: var(--text-primary);
+            outline: none;
+        }
+        .footer-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        /* Contact Section */
+        .contact-section {
+            text-align: center;
+            padding: clamp(3rem, 6vw, 5rem) 2rem;
+            border-radius: 28px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 30px 60px -35px rgba(70, 38, 107, 0.45);
+            backdrop-filter: blur(18px);
+        }
+        .contact-section h2 {
+            margin: 0 0 1rem;
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .contact-section p {
+            margin: 0 0 2rem;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .contact-methods {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .contact-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            transition: transform 160ms ease, box-shadow 160ms ease;
+            font-size: 1rem;
+        }
+        .contact-btn:hover,
+        .contact-btn:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -18px rgba(43, 45, 66, 0.4);
+            outline: none;
+        }
+        .contact-btn-whatsapp {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+        }
+        .contact-btn-whatsapp:hover,
+        .contact-btn-whatsapp:focus {
+            background: linear-gradient(135deg, #2ee576, #15a08f);
+        }
+        .contact-btn-email {
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.9), rgba(255, 124, 163, 0.9));
+        }
+        .contact-btn-email:hover,
+        .contact-btn-email:focus {
+            background: linear-gradient(135deg, rgba(114, 84, 255, 1), rgba(255, 124, 163, 1));
+        }
+        .contact-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            background: currentColor;
+            mask-size: contain;
+            mask-repeat: no-repeat;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+        }
+        .contact-icon.icon-message {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+        }
+        .contact-icon.icon-mail {
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/%3E%3Cpolyline points='22,6 12,13 2,6'/%3E%3C/svg%3E");
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/%3E%3Cpolyline points='22,6 12,13 2,6'/%3E%3C/svg%3E");
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1.25rem;
+                padding: 1.5rem 0;
+                margin-bottom: 2rem;
+            }
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.25rem;
+            }
+            .nav-links a {
+                font-size: 0.9rem;
+                padding: 0.4rem 0.85rem;
+            }
+            .logo {
+                font-size: 1.15rem;
+            }
+            .hero-cta {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .hero-cta .btn-primary,
+            .hero-cta .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+            .features-grid,
+            .steps {
+                grid-template-columns: 1fr;
+            }
+            .contact-methods {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .contact-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <!-- Navigation -->
+        <nav>
+            <a href="{% url 'events:landing-page' %}" class="logo">Momentbasket</a>
+            <div class="nav-links">
+                <a href="{% url 'events:event-upload' slug='teszt-event' %}">Teszt Esemény</a>
+                <a href="{% url 'events:admin-dashboard' %}">Admin</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Rögzítsd és Oszd Meg<br>az Esemény Pillanatait</h1>
+            <p class="tagline">
+                Gyönyörű fotógalériák eseményeidhez. A vendégek azonnal feltölthetik az emlékeket egy egyszerű QR kóddal—mi pedig kezeljük a technikai részleteket.
+            </p>
+            <div class="hero-cta">
+                <a href="https://wa.me/36123456789" target="_blank" rel="noopener noreferrer" class="btn-primary"><span class="btn-icon icon-phone"></span> Ajánlatkérés WhatsApp-on</a>
+                <a href="{% url 'events:event-upload' slug='teszt-event' %}" class="btn-secondary">Próbáld Ki Most</a>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section>
+            <div class="section-header">
+                <h2>Minden, Amire Szükséged Van</h2>
+                <p>Egyszerű, elegáns és emlékezetes pillanatokra tervezve</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon icon-upload"></span>
+                    <h3>Egyszerű Fotófeltöltés</h3>
+                    <p>A vendégek azonnal feltölthetik a fotókat telefonjukról. Nincs szükség alkalmazásra, csak egy egyszerű webes felület.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon icon-gallery"></span>
+                    <h3>Valós Idejű Galéria</h3>
+                    <p>Nézd, ahogy az esemény galériád valós időben növekszik a fotók feltöltésével. Gyönyörű, reszponzív dizájn bármilyen eszközön.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon icon-qr"></span>
+                    <h3>QR Kód Megosztás</h3>
+                    <p>Megkapod a QR kódot, amit megjeleníthetsz a helyszínen vagy digitálisan megoszthatsz. A vendégek beolvassák és feltöltik—ennyire egyszerű.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon icon-settings"></span>
+                    <h3>Professzionális Beállítás</h3>
+                    <p>Mi kezeljük az esemény beállítását, személyre szabást és QR kód generálást. Te csak megkapod a QR kódot és megosztod a vendégekkel.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon icon-palette"></span>
+                    <h3>Egyedi Márkajelzés</h3>
+                    <p>Személyre szabhatod minden eseményt egyedi színekkel, párok neveivel és üzenetekkel. Tegyed minden eseményt egyedivé.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon icon-server"></span>
+                    <h3>Offline Működés</h3>
+                    <p>Tökéletesen működik offline Raspberry Pi-n vagy helyi hálózatokon. Nincs szükség internetkapcsolatra az eseményhez.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section>
+            <div class="section-header">
+                <h2>Hogyan Működik</h2>
+                <p>Egyszerű folyamat a kezdetektől a galériáig</p>
+            </div>
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="process-step-number">1</div>
+                    <div class="process-step-image">
+                        <div class="process-step-image-placeholder">
+                            <span class="feature-icon icon-phone" style="margin: 0;"></span>
+                            <span style="font-size: 0.9rem; text-align: center; margin-top: 0.5rem;">Rendelés / Ajánlatkérés</span>
+                        </div>
+                        <!-- Replace with screenshot: <img src="/static/images/process-booking.png" alt="Rendelés WhatsApp-on vagy booking formon"> -->
+                    </div>
+                    <h3>Rendelés vagy Ajánlatkérés</h3>
+                    <p>Lépj velünk kapcsolatba WhatsApp-on vagy booking formon keresztül. Megbeszéljük az esemény részleteit és elkészítjük az ajánlatot.</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="process-step-number">2</div>
+                    <div class="process-step-image">
+                        <div class="process-step-image-placeholder">
+                            <span class="feature-icon icon-settings" style="margin: 0;"></span>
+                            <span style="font-size: 0.9rem; text-align: center; margin-top: 0.5rem;">Admin esemény létrehozás</span>
+                        </div>
+                        <!-- Replace with screenshot: <img src="/static/images/process-admin-setup.png" alt="Admin esemény létrehozása"> -->
+                    </div>
+                    <h3>Admin Beállítás</h3>
+                    <p>Mi létrehozzuk az eseményt az admin felületen, személyre szabjuk a színeket, szövegeket, és generáljuk a QR kódot.</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="process-step-number">3</div>
+                    <div class="process-step-image">
+                        <div class="process-step-image-placeholder">
+                            <span class="feature-icon icon-qr" style="margin: 0;"></span>
+                            <span style="font-size: 0.9rem; text-align: center; margin-top: 0.5rem;">QR kód megosztás</span>
+                        </div>
+                        <!-- Replace with screenshot: <img src="/static/images/process-qr-code.png" alt="QR kód"> -->
+                    </div>
+                    <h3>QR Kód Megosztás</h3>
+                    <p>Megkapod a QR kódot, amit megjeleníthetsz a helyszínen vagy digitálisan megoszthatsz a vendégekkel.</p>
+                </div>
+            </div>
+            <div class="process-flow" style="margin-top: 3rem;">
+                <div class="process-step">
+                    <div class="process-step-number">4</div>
+                    <div class="process-step-image">
+                        <div class="process-step-image-placeholder">
+                            <span class="feature-icon icon-upload" style="margin: 0;"></span>
+                            <span style="font-size: 0.9rem; text-align: center; margin-top: 0.5rem;">Fénykép feltöltés</span>
+                        </div>
+                        <!-- Replace with screenshot: <img src="/static/images/process-upload.png" alt="Feltöltési oldal"> -->
+                    </div>
+                    <h3>Fénykép Feltöltés</h3>
+                    <p>A vendégek beolvassák a QR kódot, kiválasztják a fotót telefonjukról, opcionálisan hozzáadnak egy üzenetet, és feltöltik.</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="process-step-number">5</div>
+                    <div class="process-step-image">
+                        <div class="process-step-image-placeholder">
+                            <span class="feature-icon icon-check" style="margin: 0;"></span>
+                            <span style="font-size: 0.9rem; text-align: center; margin-top: 0.5rem;">Sikeres feltöltés</span>
+                        </div>
+                        <!-- Replace with screenshot: <img src="/static/images/process-success.png" alt="Sikeres feltöltés"> -->
+                    </div>
+                    <h3>Sikeres Feltöltés</h3>
+                    <p>A vendégek azonnal visszajelzést kapnak a sikeres feltöltésről, és lehetőségük van újabb fotókat feltölteni.</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="process-step-number">6</div>
+                    <div class="process-step-image">
+                        <div class="process-step-image-placeholder">
+                            <span class="feature-icon icon-gallery" style="margin: 0;"></span>
+                            <span style="font-size: 0.9rem; text-align: center; margin-top: 0.5rem;">Galéria megtekintés</span>
+                        </div>
+                        <!-- Replace with screenshot: <img src="/static/images/process-gallery.png" alt="Galéria"> -->
+                    </div>
+                    <h3>Galéria Megtekintés</h3>
+                    <p>Az összes feltöltött fotó valós időben megjelenik a gyönyörű galériában, amelyet bárki megtekinthet.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <h2>Készen Állsz a Kezdésre?</h2>
+            <p>Lépj velünk kapcsolatba, és mi segítünk létrehozni az eseményedet. Tökéletes esküvőkre, születésnapokra, vállalati eseményekre és még sok másra.</p>
+            <div class="cta-buttons">
+                <a href="https://wa.me/36123456789" target="_blank" rel="noopener noreferrer" class="btn-primary"><span class="btn-icon icon-phone"></span> Ajánlatkérés WhatsApp-on</a>
+                <a href="{% url 'events:event-upload' slug='teszt-event' %}" class="btn-secondary">Próbáld Ki Most</a>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section class="contact-section">
+            <h2>Lépj Velünk Kapcsolatba</h2>
+            <p>Kérdésed van vagy segítségre van szükséged? Szívesen segítünk!</p>
+            <div class="contact-methods">
+                <a href="https://wa.me/36123456789" target="_blank" rel="noopener noreferrer" class="contact-btn contact-btn-whatsapp">
+                    <span class="contact-icon icon-message"></span>
+                    <span>WhatsApp</span>
+                </a>
+                <a href="mailto:info@momentbasket.com" class="contact-btn contact-btn-email">
+                    <span class="contact-icon icon-mail"></span>
+                    <span>Email</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-links">
+                <a href="{% url 'events:landing-page' %}">Kezdőlap</a>
+                <a href="{% url 'events:event-upload' slug='teszt-event' %}">Teszt Esemény</a>
+                <a href="{% url 'events:event-gallery' slug='teszt-event' %}">Galéria</a>
+                <a href="{% url 'events:admin-dashboard' %}">Admin</a>
+            </div>
+            <p class="footer-text">Momentbasket · Rögzítsd és Oszd Meg az Esemény Pillanatait</p>
+        </footer>
+    </div>
+</body>
+</html>

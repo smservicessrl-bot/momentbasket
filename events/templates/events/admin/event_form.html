@@ -1,0 +1,362 @@
+{% extends 'events/admin/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>{{ title }}</h2>
+    <div class="header-actions">
+        <a href="{% if event %}{% url 'events:admin-event-detail' event.id %}{% else %}{% url 'events:admin-event-list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+
+<div class="card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <h3 style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">Basic Information</h3>
+        
+        <div class="form-group">
+            <label class="form-label" for="{{ form.name.id_for_label }}">Event Name *</label>
+            {{ form.name }}
+            {% if form.name.help_text %}
+                <div class="form-help">{{ form.name.help_text }}</div>
+            {% endif %}
+            {% if form.name.errors %}
+                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.name.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="{{ form.slug.id_for_label }}">Slug</label>
+            {{ form.slug }}
+            {% if form.slug.help_text %}
+                <div class="form-help">{{ form.slug.help_text }}</div>
+            {% endif %}
+            {% if form.slug.errors %}
+                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.slug.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <div class="form-check">
+                {{ form.is_active }}
+                <label class="form-label" for="{{ form.is_active.id_for_label }}" style="margin: 0;">Active</label>
+            </div>
+            {% if form.is_active.help_text %}
+                <div class="form-help">{{ form.is_active.help_text }}</div>
+            {% endif %}
+        </div>
+        
+        <h3 style="margin: 2rem 0 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">Timing</h3>
+        
+        <div class="form-group">
+            <label class="form-label" for="{{ form.start_time.id_for_label }}">Start Time</label>
+            {{ form.start_time }}
+            {% if form.start_time.help_text %}
+                <div class="form-help">{{ form.start_time.help_text }}</div>
+            {% endif %}
+            {% if form.start_time.errors %}
+                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.start_time.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="{{ form.end_time.id_for_label }}">End Time</label>
+            {{ form.end_time }}
+            {% if form.end_time.help_text %}
+                <div class="form-help">{{ form.end_time.help_text }}</div>
+            {% endif %}
+            {% if form.end_time.errors %}
+                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.end_time.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <h3 style="margin: 2rem 0 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">Personalization</h3>
+        
+        <div class="form-group">
+            <label class="form-label" for="{{ form.couple_names.id_for_label }}">Couple Names</label>
+            {{ form.couple_names }}
+            {% if form.couple_names.help_text %}
+                <div class="form-help">{{ form.couple_names.help_text }}</div>
+            {% endif %}
+            {% if form.couple_names.errors %}
+                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.couple_names.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="{{ form.upload_page_subtitle.id_for_label }}">Upload Page Subtitle</label>
+            {{ form.upload_page_subtitle }}
+            {% if form.upload_page_subtitle.help_text %}
+                <div class="form-help">{{ form.upload_page_subtitle.help_text }}</div>
+            {% endif %}
+            {% if form.upload_page_subtitle.errors %}
+                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.upload_page_subtitle.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label" for="{{ form.bg_color_1.id_for_label }}">Background Color 1</label>
+                {{ form.bg_color_1 }}
+                {% if form.bg_color_1.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.bg_color_1.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.bg_color_2.id_for_label }}">Background Color 2</label>
+                {{ form.bg_color_2 }}
+                {% if form.bg_color_2.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.bg_color_2.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.bg_color_3.id_for_label }}">Background Color 3</label>
+                {{ form.bg_color_3 }}
+                {% if form.bg_color_3.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.bg_color_3.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.primary_color.id_for_label }}">Primary Color</label>
+                {{ form.primary_color }}
+                {% if form.primary_color.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.primary_color.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.accent_color_1.id_for_label }}">Accent Color 1</label>
+                {{ form.accent_color_1 }}
+                {% if form.accent_color_1.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.accent_color_1.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.accent_color_2.id_for_label }}">Accent Color 2</label>
+                {{ form.accent_color_2 }}
+                {% if form.accent_color_2.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.accent_color_2.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.text_primary_color.id_for_label }}">Text Primary Color</label>
+                {{ form.text_primary_color }}
+                {% if form.text_primary_color.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.text_primary_color.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.text_muted_color.id_for_label }}">Text Muted Color</label>
+                {{ form.text_muted_color }}
+                {% if form.text_muted_color.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.text_muted_color.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if formset %}
+        <h3 style="margin: 2rem 0 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">Photos</h3>
+        
+        {% if formset.non_form_errors %}
+            <div class="alert alert-error">
+                {{ formset.non_form_errors }}
+            </div>
+        {% endif %}
+        
+        <div id="photo-formset">
+            {{ formset.management_form }}
+            <div id="photo-forms" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1rem;">
+                {% for photo_form in formset %}
+                    <div class="photo-form-item" data-form-index="{{ forloop.counter0 }}" style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 8px; background: rgba(255, 255, 255, 0.5);">
+                        {% if photo_form.DELETE %}
+                            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                                {{ photo_form.DELETE }}
+                                <label for="{{ photo_form.DELETE.id_for_label }}" style="margin: 0; color: var(--danger); cursor: pointer;">Delete this photo</label>
+                            </div>
+                        {% endif %}
+                        
+                        {% if photo_form.id %}
+                            {{ photo_form.id }}
+                        {% endif %}
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="{{ photo_form.image.id_for_label }}">Photo</label>
+                            {% if photo_form.instance and photo_form.instance.image %}
+                                <div style="margin-bottom: 0.5rem;">
+                                    <img src="{{ photo_form.instance.image.url }}" alt="Current photo" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover;">
+                                </div>
+                            {% endif %}
+                            {{ photo_form.image }}
+                            {% if photo_form.image.errors %}
+                                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ photo_form.image.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="{{ photo_form.comment.id_for_label }}">Comment</label>
+                            {{ photo_form.comment }}
+                            {% if photo_form.comment.errors %}
+                                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ photo_form.comment.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add-photo-btn" class="btn btn-secondary" style="margin-top: 1rem; grid-column: 1 / -1;">+ Add Another Photo</button>
+        </div>
+        {% endif %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <button type="submit" class="btn btn-primary">{{ action }} Event</button>
+            <a href="{% if event %}{% url 'events:admin-event-detail' event.id %}{% else %}{% url 'events:admin-event-list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% if formset %}
+<script>
+    (function() {
+        const totalFormsInput = document.querySelector('#id_photos-TOTAL_FORMS');
+        const photoFormsContainer = document.getElementById('photo-forms');
+        const addPhotoBtn = document.getElementById('add-photo-btn');
+        let formCount = parseInt(totalFormsInput.value);
+        
+        // Handle delete checkbox - hide form when checked
+        function setupDeleteCheckboxes() {
+            document.querySelectorAll('input[type="checkbox"][name*="-DELETE"]').forEach(function(checkbox) {
+                if (!checkbox.dataset.setup) {
+                    checkbox.dataset.setup = 'true';
+                    checkbox.addEventListener('change', function() {
+                        const formItem = this.closest('.photo-form-item');
+                        if (this.checked) {
+                            formItem.style.opacity = '0.5';
+                            formItem.style.pointerEvents = 'none';
+                        } else {
+                            formItem.style.opacity = '1';
+                            formItem.style.pointerEvents = 'auto';
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Find an empty form to use as template
+        function findEmptyForm() {
+            const forms = photoFormsContainer.querySelectorAll('.photo-form-item');
+            for (let i = 0; i < forms.length; i++) {
+                const form = forms[i];
+                const imageInput = form.querySelector('input[type="file"]');
+                const deleteCheckbox = form.querySelector('input[type="checkbox"][name*="-DELETE"]');
+                const idInput = form.querySelector('input[name*="-id"]');
+                
+                // Check if this is an empty form (no existing photo, not marked for deletion)
+                if (imageInput && !idInput && (!deleteCheckbox || !deleteCheckbox.checked)) {
+                    return form;
+                }
+            }
+            return null;
+        }
+        
+        // Add new photo form by cloning an empty form or creating a new one
+        function addPhotoForm() {
+            const templateForm = findEmptyForm();
+            let newForm;
+            
+            if (!templateForm) {
+                // If no empty form found, create a new one from scratch
+                const newFormHtml = `
+                    <div class="photo-form-item" data-form-index="${formCount}" style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 8px; background: rgba(255, 255, 255, 0.5);">
+                        <div class="form-group">
+                            <label class="form-label" for="id_photos-${formCount}-image">Photo</label>
+                            <input type="file" name="photos-${formCount}-image" accept="image/*" id="id_photos-${formCount}-image" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="id_photos-${formCount}-comment">Comment</label>
+                            <textarea name="photos-${formCount}-comment" cols="40" rows="2" id="id_photos-${formCount}-comment" class="form-control" placeholder="Opcionális megjegyzés..."></textarea>
+                        </div>
+                    </div>
+                `;
+                
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = newFormHtml.trim();
+                newForm = tempDiv.firstChild;
+            } else {
+                // Clone the template form
+                const newForm = templateForm.cloneNode(true);
+                newForm.setAttribute('data-form-index', formCount);
+                
+                // Update all input names and IDs to use the new index
+                newForm.querySelectorAll('input, textarea, select, label').forEach(function(element) {
+                    if (element.tagName === 'LABEL') {
+                        const forAttr = element.getAttribute('for');
+                        if (forAttr) {
+                            element.setAttribute('for', forAttr.replace(/photos-\d+-/, `photos-${formCount}-`));
+                        }
+                    } else {
+                        const name = element.getAttribute('name');
+                        const id = element.getAttribute('id');
+                        if (name) {
+                            element.setAttribute('name', name.replace(/photos-\d+-/, `photos-${formCount}-`));
+                        }
+                        if (id) {
+                            element.setAttribute('id', id.replace(/photos-\d+-/, `photos-${formCount}-`));
+                        }
+                        // Clear values
+                        if (element.type === 'file') {
+                            element.value = '';
+                        } else if (element.type !== 'checkbox' && element.type !== 'hidden') {
+                            element.value = '';
+                        }
+                    }
+                });
+                
+                // Remove delete checkbox and id field if present
+                const deleteCheckbox = newForm.querySelector('input[type="checkbox"][name*="-DELETE"]');
+                const deleteLabel = newForm.querySelector('label[for*="-DELETE"]');
+                const idInput = newForm.querySelector('input[name*="-id"]');
+                if (deleteCheckbox && deleteCheckbox.parentElement) {
+                    deleteCheckbox.parentElement.remove();
+                }
+                if (deleteLabel && deleteLabel.parentElement) {
+                    deleteLabel.parentElement.remove();
+                }
+                if (idInput) {
+                    idInput.remove();
+                }
+                
+                // Remove any existing image preview
+                const imgPreview = newForm.querySelector('img');
+                if (imgPreview && imgPreview.parentElement) {
+                    imgPreview.parentElement.remove();
+                }
+            }
+            
+            // Append the new form to the container
+            photoFormsContainer.appendChild(newForm);
+            
+            formCount++;
+            totalFormsInput.value = formCount;
+            setupDeleteCheckboxes();
+        }
+        
+        // Setup initial delete checkboxes
+        setupDeleteCheckboxes();
+        
+        // Add event listener for add photo button
+        if (addPhotoBtn) {
+            addPhotoBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addPhotoForm();
+            });
+        }
+    })();
+</script>
+{% endif %}
+{% endblock %}

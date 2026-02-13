@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ event.name }} · Köszönjük</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            {% with colors=event.get_theme_colors %}
+            --bg: linear-gradient(135deg, {{ colors.bg_color_1 }} 0%, {{ colors.bg_color_2 }} 50%, {{ colors.bg_color_3 }} 100%);
+            --card: rgba(255, 255, 255, 0.95);
+            --border: rgba(255, 255, 255, 0.7);
+            --primary: {{ colors.text_primary_color }};
+            --muted: {{ colors.text_muted_color }};
+            --accent: linear-gradient(135deg, {{ colors.accent_color_1 }}, {{ colors.accent_color_2 }});
+            --accent-1: {{ colors.accent_color_1 }};
+            --accent-2: {{ colors.accent_color_2 }};
+            {% endwith %}
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Lora", "Cormorant Garamond", Georgia, serif;
+            background: var(--bg);
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(1.5rem, 5vw, 3rem);
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .card {
+            width: min(480px, 95vw);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: clamp(2.5rem, 5vw, 3.5rem);
+            box-shadow: 
+                0 20px 60px -30px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.6) 20%, 
+                rgba(255, 255, 255, 0.6) 80%, 
+                transparent 100%);
+        }
+        h1 {
+            margin: 0 0 0.5rem;
+            font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+            font-size: clamp(2.2rem, 6vw, 3rem);
+            font-weight: 500;
+            text-align: center;
+            letter-spacing: 0.02em;
+            color: var(--primary);
+            line-height: 1.2;
+            position: relative;
+        }
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                color-mix(in srgb, var(--accent-1) 40%, transparent) 50%, 
+                transparent 100%);
+            margin: 1.2rem auto 1.5rem;
+            position: relative;
+        }
+        .divider::before,
+        .divider::after {
+            content: '❦';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: color-mix(in srgb, var(--accent-1) 50%, transparent);
+            font-size: 0.7rem;
+        }
+        .divider::before {
+            left: -25px;
+        }
+        .divider::after {
+            right: -25px;
+        }
+        .message {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            font-size: clamp(1rem, 2.5vw, 1.15rem);
+            font-weight: 400;
+            line-height: 1.6;
+            font-style: italic;
+            letter-spacing: 0.01em;
+        }
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1.1rem 2.5rem;
+            border-radius: 50px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 500;
+            font-family: "Cormorant Garamond", "Lora", serif;
+            text-decoration: none;
+            box-shadow: 0 10px 32px -12px color-mix(in srgb, var(--accent-1) 55%, transparent);
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 0.95rem;
+        }
+        .cta:hover,
+        .cta:focus-visible {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 40px -10px color-mix(in srgb, var(--accent-1) 60%, transparent);
+            outline: none;
+        }
+        .cta:active {
+            transform: translateY(-1px);
+        }
+        .cta span {
+            font-size: 1.3rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1>{{ event.name }}</h1>
+        <div class="divider"></div>
+        <p class="message">Köszönjük, hogy rögzítetted az ünnepi pillanatot! A fényképed biztonságban van a házigazdáknál és hamarosan megjelenik a galériában.</p>
+        <a class="cta" href="{% url 'events:event-upload' slug=event.slug %}">
+            <span>⟲</span>
+            <span>Tölts fel újabb fényképet</span>
+        </a>
+    </main>
+</body>
+</html>

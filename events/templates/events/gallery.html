@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ event.name }} · Galéria</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            {% with colors=event.get_theme_colors %}
+            --bg: linear-gradient(135deg, {{ colors.bg_color_1 }} 0%, {{ colors.bg_color_2 }} 50%, {{ colors.bg_color_3 }} 100%);
+            --primary: {{ colors.text_primary_color }};
+            --muted: {{ colors.text_muted_color }};
+            --card: rgba(255, 255, 255, 0.85);
+            --border: rgba(255, 255, 255, 0.6);
+            --accent-1: {{ colors.accent_color_1 }};
+            {% endwith %}
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Lora", "Cormorant Garamond", Georgia, serif;
+            background: var(--bg);
+            color: var(--primary);
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        header {
+            text-align: center;
+            padding: clamp(1.8rem, 6vw, 3rem) clamp(1.2rem, 6vw, 3.5rem);
+            position: relative;
+            z-index: 1;
+        }
+        header h1 {
+            margin: 0;
+            font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            color: var(--primary);
+        }
+        header span {
+            display: block;
+            margin-top: 0.75rem;
+            color: var(--muted);
+            font-style: italic;
+            font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+        }
+        .grid {
+            display: grid;
+            gap: clamp(0.8rem, 2vw, 1.2rem);
+            padding: 0 clamp(1.2rem, 6vw, 3.5rem) clamp(2.5rem, 6vw, 4rem);
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            position: relative;
+            z-index: 1;
+        }
+        .tile {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--card);
+            border: 1px solid var(--border);
+            aspect-ratio: 3 / 4;
+            box-shadow: 0 22px 45px -35px rgba(64, 40, 100, 0.5);
+            transition: transform 160ms ease, box-shadow 160ms ease;
+        }
+        .tile:hover,
+        .tile:focus-within {
+            transform: translateY(-6px);
+            box-shadow: 0 28px 60px -30px rgba(64, 40, 100, 0.55);
+        }
+        .tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .meta {
+            position: absolute;
+            inset: auto 0 0 0;
+            padding: 0.9rem 1rem;
+            background: linear-gradient(180deg, rgba(17, 18, 40, 0) 0%, rgba(17, 18, 40, 0.75) 100%);
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 0.6rem;
+            font-size: 0.9rem;
+        }
+        .meta time {
+            font-variant-numeric: tabular-nums;
+            opacity: 0.85;
+        }
+        .meta span {
+            max-width: 60%;
+            font-size: 0.88rem;
+            opacity: 0.9;
+        }
+        .empty {
+            text-align: center;
+            padding: 4.5rem 1.5rem;
+            color: var(--muted);
+            font-size: clamp(1rem, 2.5vw, 1.15rem);
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+        .tile-link {
+            position: absolute;
+            inset: 0;
+            cursor: pointer;
+        }
+        /* Carousel Viewer Styles */
+        .carousel-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .carousel-overlay.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+        .carousel-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 4rem 1rem;
+        }
+        .carousel-image-wrapper {
+            position: relative;
+            max-width: 90vw;
+            max-height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-image {
+            max-width: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.2s ease;
+            z-index: 1001;
+        }
+        .carousel-nav:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .carousel-nav.prev {
+            left: 2rem;
+        }
+        .carousel-nav.next {
+            right: 2rem;
+        }
+        .carousel-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .carousel-nav:disabled:hover {
+            transform: translateY(-50%);
+        }
+        .carousel-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.2s ease;
+            z-index: 1001;
+        }
+        .carousel-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        .carousel-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .carousel-info time {
+            display: block;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+        .carousel-info .comment {
+            font-size: 1rem;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .carousel-counter {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1001;
+        }
+        @media (max-width: 768px) {
+            .carousel-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            .carousel-nav.prev {
+                left: 1rem;
+            }
+            .carousel-nav.next {
+                right: 1rem;
+            }
+            .carousel-close {
+                top: 1rem;
+                right: 1rem;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            .carousel-counter {
+                top: 1rem;
+                left: 1rem;
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+            .carousel-info {
+                padding: 1.5rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{ event.name }} Galéria</h1>
+        <span>{{ photos|length }} megosztott pillanat</span>
+    </header>
+
+    {% if photos %}
+        <section class="grid">
+            {% for photo in photos %}
+                <figure class="tile" data-photo-index="{{ forloop.counter0 }}">
+                    <a class="tile-link" href="#" data-photo-url="{{ photo.image.url }}" data-photo-comment="{{ photo.comment|default:'' }}" data-photo-date="{{ photo.uploaded_at|date:'M j, Y H:i' }}" aria-label="Fénykép megtekintése {{ forloop.counter }} a(z) {{ event.name }} eseményből"></a>
+                    <img src="{{ photo.image.url }}" alt="Fénykép a(z) {{ event.name }} eseményről" loading="lazy">
+                    <figcaption class="meta">
+                        <time datetime="{{ photo.uploaded_at|date:'c' }}">{{ photo.uploaded_at|date:"M j, H:i" }}</time>
+                        {% if photo.comment %}
+                            <span>{{ photo.comment|truncatechars:40 }}</span>
+                        {% endif %}
+                    </figcaption>
+                </figure>
+            {% endfor %}
+        </section>
+
+        <!-- Carousel Viewer -->
+        <div class="carousel-overlay" id="carouselOverlay" role="dialog" aria-label="Képgaléria megjelenítő" aria-modal="true">
+            <div class="carousel-counter" id="carouselCounter">1 / {{ photos|length }}</div>
+            <button class="carousel-close" id="carouselClose" aria-label="Galéria bezárása">×</button>
+            <div class="carousel-container">
+                <button class="carousel-nav prev" id="carouselPrev" aria-label="Előző kép">‹</button>
+                <div class="carousel-image-wrapper">
+                    <img class="carousel-image" id="carouselImage" src="" alt="">
+                    <div class="carousel-info" id="carouselInfo">
+                        <time id="carouselDate"></time>
+                        <div class="comment" id="carouselComment"></div>
+                    </div>
+                </div>
+                <button class="carousel-nav next" id="carouselNext" aria-label="Következő kép">›</button>
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                const photos = [
+                    {% for photo in photos %}
+                    {
+                        url: "{{ photo.image.url }}",
+                        comment: "{{ photo.comment|default:''|escapejs }}",
+                        date: "{{ photo.uploaded_at|date:'M j, Y H:i' }}"
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+
+                const overlay = document.getElementById('carouselOverlay');
+                const carouselImage = document.getElementById('carouselImage');
+                const carouselDate = document.getElementById('carouselDate');
+                const carouselComment = document.getElementById('carouselComment');
+                const carouselCounter = document.getElementById('carouselCounter');
+                const carouselClose = document.getElementById('carouselClose');
+                const carouselPrev = document.getElementById('carouselPrev');
+                const carouselNext = document.getElementById('carouselNext');
+                const tileLinks = document.querySelectorAll('.tile-link');
+
+                let currentIndex = 0;
+
+                function openCarousel(index) {
+                    currentIndex = index;
+                    updateCarousel();
+                    overlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                function closeCarousel() {
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+
+                function updateCarousel() {
+                    const photo = photos[currentIndex];
+                    carouselImage.src = photo.url;
+                    carouselDate.textContent = photo.date;
+                    carouselComment.textContent = photo.comment || '';
+                    carouselCounter.textContent = `${currentIndex + 1} / ${photos.length}`;
+                    
+                    // Update navigation buttons
+                    carouselPrev.disabled = currentIndex === 0;
+                    carouselNext.disabled = currentIndex === photos.length - 1;
+                }
+
+                function nextImage() {
+                    if (currentIndex < photos.length - 1) {
+                        currentIndex++;
+                        updateCarousel();
+                    }
+                }
+
+                function prevImage() {
+                    if (currentIndex > 0) {
+                        currentIndex--;
+                        updateCarousel();
+                    }
+                }
+
+                // Open carousel when clicking on a tile
+                tileLinks.forEach((link, index) => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openCarousel(index);
+                    });
+                });
+
+                // Navigation buttons
+                carouselNext.addEventListener('click', nextImage);
+                carouselPrev.addEventListener('click', prevImage);
+                carouselClose.addEventListener('click', closeCarousel);
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (!overlay.classList.contains('active')) return;
+                    
+                    switch(e.key) {
+                        case 'Escape':
+                            closeCarousel();
+                            break;
+                        case 'ArrowRight':
+                            nextImage();
+                            e.preventDefault();
+                            break;
+                        case 'ArrowLeft':
+                            prevImage();
+                            e.preventDefault();
+                            break;
+                    }
+                });
+
+                // Close on overlay click (but not on image click)
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        closeCarousel();
+                    }
+                });
+
+                // Prevent image drag
+                carouselImage.addEventListener('dragstart', (e) => {
+                    e.preventDefault();
+                });
+            })();
+        </script>
+    {% else %}
+        <p class="empty">Még nincsenek fényképek. Amikor a vendégek elkezdenek megosztani, azonnal megjelennek itt.</p>
+    {% endif %}
+</body>
+</html>

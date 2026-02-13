@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ event.name }} · Fénykép feltöltése</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            {% with colors=event.get_theme_colors %}
+            --bg: linear-gradient(135deg, {{ colors.bg_color_1 }} 0%, {{ colors.bg_color_2 }} 50%, {{ colors.bg_color_3 }} 100%);
+            --card: rgba(255, 255, 255, 0.95);
+            --border: rgba(255, 255, 255, 0.7);
+            --primary: {{ colors.text_primary_color }};
+            --muted: {{ colors.text_muted_color }};
+            --accent: linear-gradient(135deg, {{ colors.accent_color_1 }}, {{ colors.accent_color_2 }});
+            --accent-1: {{ colors.accent_color_1 }};
+            --accent-2: {{ colors.accent_color_2 }};
+            {% endwith %}
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Lora", "Cormorant Garamond", Georgia, serif;
+            background: var(--bg);
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(1.5rem, 5vw, 3rem);
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .card {
+            width: min(480px, 95vw);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: clamp(2.5rem, 5vw, 3.5rem);
+            box-shadow: 
+                0 20px 60px -30px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 1;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.6) 20%, 
+                rgba(255, 255, 255, 0.6) 80%, 
+                transparent 100%);
+        }
+        h1 {
+            margin: 0 0 0.5rem;
+            font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+            font-size: clamp(2.2rem, 6vw, 3rem);
+            font-weight: 500;
+            text-align: center;
+            letter-spacing: 0.02em;
+            color: var(--primary);
+            line-height: 1.2;
+            position: relative;
+        }
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                color-mix(in srgb, var(--accent-1) 40%, transparent) 50%, 
+                transparent 100%);
+            margin: 1.2rem auto 1.5rem;
+            position: relative;
+        }
+        .divider::before,
+        .divider::after {
+            content: '❦';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: color-mix(in srgb, var(--accent-1) 50%, transparent);
+            font-size: 0.7rem;
+        }
+        .divider::before {
+            left: -25px;
+        }
+        .divider::after {
+            right: -25px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            font-size: clamp(1rem, 2.5vw, 1.15rem);
+            font-weight: 400;
+            line-height: 1.6;
+            font-style: italic;
+            letter-spacing: 0.01em;
+        }
+        .messages {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .message {
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 400;
+            line-height: 1.5;
+            border-left: 3px solid;
+        }
+        .message.success {
+            background: rgba(111, 207, 151, 0.15);
+            color: #217a4e;
+            border-left-color: rgba(111, 207, 151, 0.5);
+        }
+        .message.error,
+        .message.warning {
+            background: rgba(255, 151, 144, 0.15);
+            color: #b3261e;
+            border-left-color: rgba(255, 151, 144, 0.5);
+        }
+        .message.info {
+            background: rgba(143, 174, 255, 0.15);
+            color: #1a52e1;
+            border-left-color: rgba(143, 174, 255, 0.5);
+        }
+        .errors {
+            padding: 1rem 1.2rem;
+            background: rgba(255, 151, 144, 0.15);
+            color: #b3261e;
+            border-radius: 12px;
+            font-size: 0.93rem;
+            margin-bottom: 1.2rem;
+            border-left: 3px solid rgba(255, 151, 144, 0.5);
+            line-height: 1.5;
+        }
+        form {
+            display: grid;
+            gap: 1.8rem;
+        }
+        .file-field {
+            position: relative;
+            border: 2px dashed color-mix(in srgb, var(--accent-1) 35%, transparent);
+            background: color-mix(in srgb, var(--accent-1) 5%, rgba(255, 255, 255, 0.5));
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .file-field:hover,
+        .file-field:focus-within {
+            border-color: color-mix(in srgb, var(--accent-1) 55%, transparent);
+            background: color-mix(in srgb, var(--accent-1) 10%, rgba(255, 255, 255, 0.6));
+            transform: translateY(-2px);
+        }
+        .file-field label {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 1.05rem;
+            cursor: pointer;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--accent-1) 50%, transparent);
+            transition: all 0.3s ease;
+            font-family: "Cormorant Garamond", "Lora", serif;
+            letter-spacing: 0.03em;
+        }
+        .file-field label:hover,
+        .file-field label:focus-visible {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px -10px color-mix(in srgb, var(--accent-1) 55%, transparent);
+            outline: none;
+        }
+        .file-field label span:first-child {
+            font-size: 1.3rem;
+        }
+        .file-field input[type="file"] {
+            display: none;
+        }
+        .file-hint {
+            margin-top: 1.2rem;
+            font-size: 0.875rem;
+            color: var(--muted);
+            font-style: italic;
+            letter-spacing: 0.01em;
+        }
+        textarea {
+            width: 100%;
+            border-radius: 12px;
+            padding: 1.2rem 1.4rem;
+            border: 1.5px solid color-mix(in srgb, var(--accent-1) 20%, transparent);
+            background: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            font-family: "Lora", "Cormorant Garamond", serif;
+            resize: vertical;
+            min-height: 130px;
+            transition: all 0.3s ease;
+            line-height: 1.6;
+            color: var(--primary);
+        }
+        textarea::placeholder {
+            color: var(--muted);
+            font-style: italic;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: color-mix(in srgb, var(--accent-1) 50%, transparent);
+            box-shadow: 0 8px 24px -12px color-mix(in srgb, var(--accent-1) 40%, transparent);
+            background: rgba(255, 255, 255, 0.85);
+        }
+        button[type="submit"] {
+            border: none;
+            border-radius: 50px;
+            padding: 1.1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            font-family: "Cormorant Garamond", "Lora", serif;
+            cursor: pointer;
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 10px 32px -12px color-mix(in srgb, var(--accent-1) 55%, transparent);
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 0.95rem;
+        }
+        button[type="submit"]:hover,
+        button[type="submit"]:focus-visible {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 40px -10px color-mix(in srgb, var(--accent-1) 60%, transparent);
+            outline: none;
+        }
+        button[type="submit"]:active {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>{{ event.name }}</h1>
+        <div class="divider"></div>
+        <p class="subtitle">
+                {{ event.upload_page_subtitle|default:"Ossz meg egy különleges pillanatot az ifjú párral." }}
+        </p>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            <div class="errors">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="file-field">
+                {{ form.image }}
+                <label for="id_image">
+                    <span>📷</span>
+                    <span>Válassz fényképet</span>
+                </label>
+                {% if form.image.errors %}
+                    <div class="errors">
+                        {{ form.image.errors|striptags }}
+                    </div>
+                {% endif %}
+                <!-- <p class="file-hint">Max 15MB · JPG, PNG vagy HEIC · Tökéletes mobilról való feltöltéshez</p> -->
+            </div>
+
+            <div>
+                {{ form.comment }}
+                {% if form.comment.errors %}
+                    <div class="errors">
+                        {{ form.comment.errors|striptags }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit">Osszd meg az emlékedet</button>
+        </form>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('id_image');
+        const label = document.querySelector('label[for="id_image"]');
+
+        if (fileInput && label) {
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const fileName = file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name;
+                    label.querySelector('span:nth-child(2)').textContent = `Kiválasztva: ${fileName}`;
+                } else {
+                    label.querySelector('span:nth-child(2)').textContent = 'Válassz fényképet';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

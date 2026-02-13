@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Momentbasket · Events</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg-gradient: linear-gradient(135deg, #f9e0ff 0%, #c8f5ff 50%, #ffe4d6 100%);
+            --card-bg: rgba(255, 255, 255, 0.82);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --text-primary: #2b2d42;
+            --text-muted: #6c7286;
+            --accent: #7254ff;
+            --accent-2: #ff7ca3;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+        }
+        .wrap {
+            width: min(1100px, 92vw);
+            margin: 0 auto;
+            padding: clamp(1.8rem, 5vw, 3rem) 0 clamp(3rem, 6vw, 4rem);
+        }
+        header {
+            text-align: center;
+            margin-bottom: clamp(2rem, 6vw, 3.5rem);
+        }
+        header h1 {
+            margin: 0;
+            font-weight: 700;
+            font-size: clamp(2.3rem, 6vw, 3.5rem);
+            letter-spacing: -0.02em;
+        }
+        header p {
+            margin: 0.9rem auto 0;
+            max-width: 520px;
+            font-size: 1.05rem;
+            color: var(--text-muted);
+        }
+        .grid {
+            display: grid;
+            gap: clamp(1rem, 3vw, 1.6rem);
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .card {
+            position: relative;
+            padding: clamp(1.6rem, 4vw, 2rem);
+            border-radius: 22px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 30px 60px -35px rgba(70, 38, 107, 0.45);
+            backdrop-filter: blur(18px);
+            transition: transform 160ms ease, box-shadow 160ms ease;
+            display: flex;
+            flex-direction: column;
+            gap: 1.3rem;
+        }
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(130deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 160ms ease;
+            pointer-events: none;
+        }
+        .card:hover,
+        .card:focus-within {
+            transform: translateY(-6px);
+            box-shadow: 0 35px 70px -40px rgba(49, 34, 97, 0.55);
+        }
+        .card:hover::before,
+        .card:focus-within::before {
+            opacity: 1;
+        }
+        .card h2 {
+            margin: 0;
+            font-size: 1.55rem;
+            font-weight: 650;
+            letter-spacing: -0.01em;
+        }
+        .meta {
+            display: grid;
+            gap: 0.45rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .status.live {
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.15), rgba(255, 124, 163, 0.15));
+            color: var(--accent);
+        }
+        .status.soon {
+            background: linear-gradient(135deg, rgba(255, 158, 95, 0.15), rgba(250, 200, 166, 0.15));
+            color: #ff9e5f;
+        }
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+        }
+        .links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.65rem 1.05rem;
+            border-radius: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.18), rgba(255, 124, 163, 0.18));
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+        }
+        .links a:hover,
+        .links a:focus {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(114, 84, 255, 0.28), rgba(255, 124, 163, 0.3));
+            box-shadow: 0 15px 25px -18px rgba(43, 45, 66, 0.4);
+            outline: none;
+        }
+        .empty {
+            text-align: center;
+            padding: 4rem 1.5rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            background: var(--card-bg);
+            border-radius: 22px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 20px 45px -40px rgba(0, 0, 0, 0.45);
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <h1>Momentbasket Events</h1>
+            <p>Manage upcoming celebrations and grab links you can share with guests instantly.</p>
+        </header>
+        {% if events %}
+            <section class="grid">
+                {% for event_row in events %}
+                    {% with event=event_row.object %}
+                    <article class="card">
+                        <div>
+                            <h2>{{ event.name }}</h2>
+                            <div class="meta">
+                                {% if event.start_time %}
+                                    <span>Starts · {{ event.start_time|date:"M j, Y · H:i" }}</span>
+                                {% endif %}
+                                {% if event.end_time %}
+                                    <span>Ends · {{ event.end_time|date:"M j, Y · H:i" }}</span>
+                                {% endif %}
+                                <span class="status {% if event_row.is_running %}live{% else %}soon{% endif %}">
+                                    {% if event_row.is_running %}
+                                        ● Live now
+                                    {% else %}
+                                        ⏳ Upcoming / paused
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="links">
+                            <a href="{% url 'events:event-upload' slug=event.slug %}">📤 Upload page</a>
+                            <a href="{% url 'events:event-gallery' slug=event.slug %}">🖼 Gallery</a>
+                            <a href="{% url 'events:admin-login' %}?next={% url 'events:admin-event-detail' event_id=event.id %}">⚙️ Admin</a>
+                        </div>
+                    </article>
+                    {% endwith %}
+                {% endfor %}
+            </section>
+        {% else %}
+            <p class="empty">No active events yet. Create a new event in the admin and it will appear here.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
+

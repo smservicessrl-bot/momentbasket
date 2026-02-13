@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Momentbasket</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #7254ff 0%, #ff7ca3 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        .login-header p {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #1e293b;
+            font-size: 0.875rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #7254ff;
+            box-shadow: 0 0 0 3px rgba(114, 84, 255, 0.1);
+        }
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #7254ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #5a3fe6;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        {% if form.errors %}
+        .form-group.has-error .form-control {
+            border-color: #ef4444;
+        }
+        {% endif %}
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Momentbasket</h1>
+            <p>Admin Panel Login</p>
+        </div>
+        
+        {% if form.errors %}
+            <div class="alert alert-error">
+                Please enter a correct username and password. Note that both fields may be case-sensitive.
+            </div>
+        {% endif %}
+        
+        {% if next %}
+            {% if user.is_authenticated %}
+                <div class="alert alert-info">
+                    Your account doesn't have access to this page. To proceed, please login with an account that has access.
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Please login to see this page.
+                </div>
+            {% endif %}
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+            
+            <div class="form-group {% if form.errors %}has-error{% endif %}">
+                <label class="form-label" for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+            </div>
+            
+            <div class="form-group {% if form.errors %}has-error{% endif %}">
+                <label class="form-label" for="id_password">Password</label>
+                <input type="password" name="password" id="id_password" class="form-control" required>
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+    </div>
+</body>
+</html>
