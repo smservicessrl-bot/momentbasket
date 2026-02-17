@@ -51,15 +51,15 @@ class Event(models.Model):
     def get_theme_colors(self) -> dict:
         """
         Returns a dictionary of theme colors, using defaults if custom colors are not set.
-        Defaults provide an elegant wedding-style theme.
+        Defaults match the main website/demo palette (Momentbasket brand).
         """
         return {
-            "bg_color_1": self.bg_color_1 or "#ffe6f7",
-            "bg_color_2": self.bg_color_2 or "#d3f4ff",
-            "bg_color_3": self.bg_color_3 or "#ffe7d2",
+            "bg_color_1": self.bg_color_1 or "#f9e0ff",
+            "bg_color_2": self.bg_color_2 or "#c8f5ff",
+            "bg_color_3": self.bg_color_3 or "#ffe4d6",
             "primary_color": self.primary_color or "#2b2d42",
-            "accent_color_1": self.accent_color_1 or "#7f5cff",
-            "accent_color_2": self.accent_color_2 or "#ff89b3",
+            "accent_color_1": self.accent_color_1 or "#7254ff",
+            "accent_color_2": self.accent_color_2 or "#ff7ca3",
             "text_primary_color": self.text_primary_color or "#2b2d42",
             "text_muted_color": self.text_muted_color or "#6c7286",
         }

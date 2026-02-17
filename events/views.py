@@ -9,8 +9,13 @@ from .models import Event
 
 
 def landing_page(request: HttpRequest) -> HttpResponse:
-    """Marketing landing page for Momentbasket."""
-    return render(request, "events/landing.html")
+    """Marketing landing page for Momentbasket — same content as demo page."""
+    sample_event = Event.objects.filter(is_active=True).first()
+    return render(
+        request,
+        "events/demo.html",
+        {"sample_event": sample_event},
+    )
 
 
 def get_client_ip(request: HttpRequest) -> str | None:
@@ -127,5 +132,19 @@ def event_index(request: HttpRequest) -> HttpResponse:
         {
             "events": event_rows,
             "now": now,
+        },
+    )
+
+
+def demo_page(request: HttpRequest) -> HttpResponse:
+    """Professional demo page for showcasing the platform to potential customers."""
+    # Get a sample event if available for demonstration
+    sample_event = Event.objects.filter(is_active=True).first()
+    
+    return render(
+        request,
+        "events/demo.html",
+        {
+            "sample_event": sample_event,
         },
     )

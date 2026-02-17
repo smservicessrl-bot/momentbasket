@@ -22,6 +22,7 @@ urlpatterns = [
     path("", views.landing_page, name="landing-page"),
     
     # Public URLs
+    path("demo/", views.demo_page, name="demo-page"),
     path("events/", views.event_index, name="event-index"),
     path("e/<slug:slug>/upload/", views.event_upload, name="event-upload"),
     path("e/<slug:slug>/thanks/", views.upload_success, name="event-upload-success"),
