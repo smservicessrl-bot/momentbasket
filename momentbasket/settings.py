@@ -28,6 +28,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# Required for CSRF when serving over HTTPS (Django 4.0+)
+CSRF_TRUSTED_ORIGINS = [
+    'https://momentbasket.ro',
+    'https://www.momentbasket.ro',
+]
+
 
 # Application definition
 
