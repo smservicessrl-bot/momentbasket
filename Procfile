@@ -1,1 +1,2 @@
-web: python manage.py migrate --noinput && gunicorn momentbasket.wsgi
+# Temporary: creates superuser on first deploy. Set DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_PASSWORD, DJANGO_SUPERUSER_EMAIL in Railway. Remove the createsuperuser part after the first deploy.
+web: python manage.py migrate --noinput && (python manage.py createsuperuser --noinput || true) && gunicorn momentbasket.wsgi
