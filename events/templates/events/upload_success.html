@@ -184,7 +184,7 @@
         <h1>{{ event.name }}</h1>
         <div class="divider"></div>
         <div class="cta-stack">
-            <a class="cta" href="{% url 'events:event-upload' slug=event.slug %}">
+            <a class="cta" href="{% url 'events:event-upload' slug=event.slug %}{% if uid %}?uid={{ uid }}{% endif %}">
                 <span style="font-size: 2rem; margin-right: -20px;">⟲</span>
                 <span>Tölts fel újabb fényképet</span>
             </a>

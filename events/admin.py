@@ -5,7 +5,12 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .models import Event, Photo
-from .utils import generate_event_qr_code, get_event_qr_paths
+from .utils import (
+    generate_event_qr_code,
+    get_event_base_url_from_request,
+    get_event_qr_paths,
+    read_event_qr_metadata,
+)
 from .widgets import ColorPickerWidget
 
 
@@ -68,7 +73,8 @@ class EventAdmin(admin.ModelAdmin):
                 "No QR code generated yet. Use the “Generate QR code for selected events” admin action."
             )
 
-        upload_url = f"{settings.EVENT_BASE_URL.rstrip('/')}{obj.get_absolute_url()}"
+        metadata = read_event_qr_metadata(obj.slug) or {}
+        upload_url = metadata.get("target_url") or f"{settings.EVENT_BASE_URL.rstrip('/')}{obj.get_absolute_url()}"
 
         return format_html(
             '<div style="display:flex; flex-direction:column; gap:0.75rem;">'
@@ -89,9 +95,10 @@ class EventAdmin(admin.ModelAdmin):
     def generate_qr_codes(self, request, queryset):
         generated = 0
         skipped = 0
+        base_url = get_event_base_url_from_request(request)
         for event in queryset:
             try:
-                generate_event_qr_code(event)
+                generate_event_qr_code(event, base_url=base_url)
                 generated += 1
             except Exception as exc:  # pragma: no cover - defensive
                 skipped += 1

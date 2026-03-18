@@ -130,7 +130,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-EVENT_BASE_URL = os.environ.get("EVENT_BASE_URL", "http://localhost:8000")
+# Base URL embedded into generated QR codes.
+# Override on Raspberry/offline deployments if you want the admin preview links
+# to point to localhost.
+EVENT_BASE_URL = os.environ.get("EVENT_BASE_URL", "https://momentbasket.ro")
 
 # Authentication
 LOGIN_URL = '/admin-panel/login/'

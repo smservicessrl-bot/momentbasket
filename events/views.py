@@ -41,6 +41,7 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
 
     step = request.GET.get("step") or request.POST.get("step")
     photo_id = request.GET.get("photo_id") or request.POST.get("photo_id")
+    uid = request.GET.get("uid") or request.POST.get("uid")
 
     if request.method == "POST":
         # Step 2: comment save (image already exists).
@@ -54,10 +55,13 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
             if form.is_valid():
                 try:
                     form.save()
-                    return redirect(
+                    upload_success_url = reverse(
                         "events:event-upload-success",
-                        slug=event.slug,
+                        kwargs={"slug": event.slug},
                     )
+                    if uid:
+                        upload_success_url = f"{upload_success_url}?uid={uid}"
+                    return redirect(upload_success_url)
                 except ValidationError as exc:
                     form.add_error(None, exc)
                 except Exception:
@@ -83,7 +87,10 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
                     )
                 else:
                     upload_url = reverse("events:event-upload", kwargs={"slug": event.slug})
-                    return redirect(f"{upload_url}?step=2&photo_id={photo.id}")
+                    redirect_url = f"{upload_url}?step=2&photo_id={photo.id}"
+                    if uid:
+                        redirect_url += f"&uid={uid}"
+                    return redirect(redirect_url)
     else:
         # GET: choose step UI.
         if photo_id and step in (None, "2"):
@@ -95,7 +102,7 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
         else:
             form = PhotoUploadForm()
 
-    context = {"event": event, "form": form}
+    context = {"event": event, "form": form, "uid": uid}
     # If step 2 has a photo_id, we may need the preview even after validation errors.
     if photo_id and "photo" in locals():
         context["photo"] = photo
@@ -113,6 +120,7 @@ def upload_success(request: HttpRequest, slug: str) -> HttpResponse:
         "events/upload_success.html",
         {
             "event": event,
+            "uid": request.GET.get("uid"),
         },
     )
 
