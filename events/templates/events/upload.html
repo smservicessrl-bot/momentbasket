@@ -415,13 +415,88 @@
         const label = document.querySelector('label[for="id_image"]');
 
         if (fileInput && label) {
-            fileInput.addEventListener('change', (event) => {
+            // Client-side compression to reduce upload size while keeping good quality.
+            // If decoding fails (e.g. some HEIC cases), we fall back to the original file.
+            const MAX_DIMENSION_PX = 2000;
+            const JPEG_QUALITY = 0.85; // 0.7-0.9 is usually the sweet spot
+
+            async function compressImageFile(file) {
+                try {
+                    if (!file || !file.type || !file.type.startsWith('image/')) {
+                        return file;
+                    }
+
+                    const objectUrl = URL.createObjectURL(file);
+                    try {
+                        const img = new Image();
+                        img.decoding = 'async';
+                        img.src = objectUrl;
+
+                        if (img.decode) {
+                            await img.decode();
+                        } else {
+                            await new Promise((resolve, reject) => {
+                                img.onload = () => resolve();
+                                img.onerror = () => reject(new Error('Image decode failed'));
+                            });
+                        }
+
+                        const w = img.naturalWidth;
+                        const h = img.naturalHeight;
+                        if (!w || !h) return file;
+
+                        const scale = Math.min(1, MAX_DIMENSION_PX / Math.max(w, h));
+                        const targetW = Math.max(1, Math.round(w * scale));
+                        const targetH = Math.max(1, Math.round(h * scale));
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = targetW;
+                        canvas.height = targetH;
+
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return file;
+
+                        // Avoid black/transparent artifacts for PNGs with alpha.
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, targetW, targetH);
+                        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+                        const blob = await new Promise((resolve) => {
+                            canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY);
+                        });
+
+                        if (!blob) return file;
+
+                        const baseName = file.name.replace(/\.[^.]+$/, '');
+                        const compressedName = `${baseName}.jpg`;
+
+                        return new File([blob], compressedName, {
+                            type: 'image/jpeg',
+                            lastModified: file.lastModified,
+                        });
+                    } finally {
+                        URL.revokeObjectURL(objectUrl);
+                    }
+                } catch (e) {
+                    // Safe fallback: use the original upload if compression fails.
+                    return file;
+                }
+            }
+
+            fileInput.addEventListener('change', async (event) => {
                 const file = event.target.files[0];
                 if (file) {
                     const fileName = file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name;
                     label.querySelector('span:nth-child(2)').textContent = `Kiválasztva: ${fileName}`;
 
-                    // Step 1: auto-submit immediately after image selection.
+                    // Step 1: compress, then auto-submit.
+                    const compressed = await compressImageFile(file);
+                    if (compressed && compressed !== file) {
+                        const dt = new DataTransfer();
+                        dt.items.add(compressed);
+                        fileInput.files = dt.files;
+                    }
+
                     const form = fileInput.closest('form');
                     if (form && !form.dataset.autosubmitted) {
                         form.dataset.autosubmitted = 'true';
