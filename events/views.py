@@ -2,10 +2,11 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
-from .forms import PhotoUploadForm
-from .models import Event
+from .forms import PhotoCommentForm, PhotoUploadForm
+from .models import Event, Photo
 
 
 def landing_page(request: HttpRequest) -> HttpResponse:
@@ -38,31 +39,66 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
             # Event doesn't exist at all
             raise Http404("Event not found.") from None
 
-    if request.method == "POST":
-        form = PhotoUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                photo = form.save(commit=False)
-                photo.event = event
-                photo.uploader_ip = get_client_ip(request)
-                photo.save()
-            except ValidationError as exc:
-                form.add_error(None, exc)
-            except Exception:
-                messages.error(
-                    request,
-                    "Hiba történt a fénykép mentése során. Kérjük, próbáld újra.",
-                )
-            else:
-                messages.success(request, "Köszönjük! A fényképed feltöltve.")
-                return redirect("events:event-upload-success", slug=event.slug)
-    else:
-        form = PhotoUploadForm()
+    step = request.GET.get("step") or request.POST.get("step")
+    photo_id = request.GET.get("photo_id") or request.POST.get("photo_id")
 
-    context = {
-        "event": event,
-        "form": form,
-    }
+    if request.method == "POST":
+        # Step 2: comment save (image already exists).
+        if photo_id:
+            try:
+                photo = Photo.objects.get(id=photo_id, event=event)
+            except Photo.DoesNotExist:
+                raise Http404("Uploaded photo not found.") from None
+
+            form = PhotoCommentForm(request.POST, instance=photo)
+            if form.is_valid():
+                try:
+                    form.save()
+                    return redirect(
+                        "events:event-upload-success",
+                        slug=event.slug,
+                    )
+                except ValidationError as exc:
+                    form.add_error(None, exc)
+                except Exception:
+                    messages.error(
+                        request,
+                        "Hiba történt a megjegyzés mentése során. Kérjük, próbáld újra.",
+                    )
+        else:
+            # Step 1: image upload.
+            form = PhotoUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                try:
+                    photo = form.save(commit=False)
+                    photo.event = event
+                    photo.uploader_ip = get_client_ip(request)
+                    photo.save()
+                except ValidationError as exc:
+                    form.add_error(None, exc)
+                except Exception:
+                    messages.error(
+                        request,
+                        "Hiba történt a fénykép mentése során. Kérjük, próbáld újra.",
+                    )
+                else:
+                    upload_url = reverse("events:event-upload", kwargs={"slug": event.slug})
+                    return redirect(f"{upload_url}?step=2&photo_id={photo.id}")
+    else:
+        # GET: choose step UI.
+        if photo_id and step in (None, "2"):
+            try:
+                photo = Photo.objects.get(id=photo_id, event=event)
+            except Photo.DoesNotExist:
+                raise Http404("Uploaded photo not found.") from None
+            form = PhotoCommentForm(instance=photo)
+        else:
+            form = PhotoUploadForm()
+
+    context = {"event": event, "form": form}
+    # If step 2 has a photo_id, we may need the preview even after validation errors.
+    if photo_id and "photo" in locals():
+        context["photo"] = photo
     return render(request, "events/upload.html", context)
 
 

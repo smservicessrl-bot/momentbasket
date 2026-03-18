@@ -151,17 +151,58 @@
         .cta span {
             font-size: 1.3rem;
         }
+
+        .cta svg {
+            width: 1.35rem;
+            height: 1.35rem;
+            display: block;
+        }
+
+        .cta-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            align-items: center;
+        }
+
+        .cta.secondary {
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--primary);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 10px 32px -20px rgba(0, 0, 0, 0.18);
+        }
+
+        .cta.secondary:hover,
+        .cta.secondary:focus-visible {
+            box-shadow: 0 14px 40px -26px rgba(0, 0, 0, 0.24);
+        }
     </style>
 </head>
 <body>
     <main class="card">
         <h1>{{ event.name }}</h1>
         <div class="divider"></div>
-        <p class="message">Köszönjük, hogy rögzítetted az ünnepi pillanatot! A fényképed biztonságban van a házigazdáknál és hamarosan megjelenik a galériában.</p>
-        <a class="cta" href="{% url 'events:event-upload' slug=event.slug %}">
-            <span>⟲</span>
-            <span>Tölts fel újabb fényképet</span>
-        </a>
+        <div class="cta-stack">
+            <a class="cta" href="{% url 'events:event-upload' slug=event.slug %}">
+                <span style="font-size: 2rem; margin-right: -20px;">⟲</span>
+                <span>Tölts fel újabb fényképet</span>
+            </a>
+
+            <a class="cta secondary" href="{% url 'events:event-gallery' slug=event.slug %}">
+                <span aria-hidden="true" style="display:inline-flex; align-items:center; justify-content:center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <!-- Photo frame -->
+                        <rect x="5" y="6" width="14" height="12" rx="3"></rect>
+                        <!-- Sun -->
+                        <circle cx="9" cy="10" r="1.2"></circle>
+                        <!-- Mountain -->
+                        <path d="M6.8 17.2l3.6-4.4 2.2 2.7 2.4-2.9 4 4.6"></path>
+                    </svg>
+                </span>
+                <span>Megnézem a galériát</span>
+            </a>
+        </div>
     </main>
 </body>
 </html>

@@ -310,6 +310,21 @@
             background: rgba(15, 23, 42, 0.85);
             border: 1px solid rgba(148, 163, 184, 0.5);
         }
+
+        /* QR Overlay (bottom-left) */
+        .hero-qr-wrap {
+            position: absolute;
+            left: 1.2rem;
+            bottom: 1.2rem;
+            z-index: 3;
+        }
+        .hero-qr-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 14px;
+            display: block;
+            box-shadow: 0 22px 55px -40px rgba(0, 0, 0, 0.75);
+        }
         .hero .hero-content {
             display: flex;
             flex-direction: column;
@@ -760,6 +775,15 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .hero-qr-wrap {
+                left: 1rem;
+                bottom: 1rem;
+            }
+            .hero-qr-image {
+                width: 108px;
+                height: 108px;
+            }
         }
     </style>
 </head>
@@ -812,7 +836,7 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="hero-visual" aria-hidden="true">
+                <div class="hero-visual">
                     <div class="hero-visual-grid">
                         <div class="hero-photo hero-photo-large">
                             <img src="{% static 'events/demo/kari-bjorn-photography-Cz94emNSfo8-unsplash.jpg' %}" alt="">
@@ -841,6 +865,10 @@
                         <div class="hero-photo">
                             <img src="{% static 'events/demo/jakob-owens-nCegMtCFWOU-unsplash.jpg' %}" alt="">
                         </div>
+                    </div>
+
+                    <div class="hero-qr-wrap" role="img" aria-label="QR kód a demo eseményhez">
+                        <img class="hero-qr-image" src="{% static 'events/demo/teszt-event.png' %}" alt="QR kód a demo eseményhez" width="120" height="120" loading="eager" decoding="async">
                     </div>
                      <!--<div class="hero-visual-heading">Valódi pillanatok a vendégektől</div>-->
                     

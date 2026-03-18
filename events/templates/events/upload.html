@@ -28,10 +28,12 @@
             {% endwith %}
         }
         .back-home {
-            margin-top: 2rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
             text-align: center;
         }
         .back-home a {
+            margin-top: 20px;
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
@@ -59,6 +61,7 @@
             background: var(--bg);
             color: var(--primary);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: clamp(1.5rem, 5vw, 3rem);
@@ -212,10 +215,10 @@
             justify-content: center;
             align-items: center;
             gap: 0.75rem;
-            padding: 1rem 2rem;
+            padding: 1.25rem 2.6rem;
             border-radius: 50px;
             font-weight: 500;
-            font-size: 1.05rem;
+            font-size: 1.2rem;
             cursor: pointer;
             background: var(--accent);
             color: #fff;
@@ -232,7 +235,7 @@
             outline: none;
         }
         .file-field label span:first-child {
-            font-size: 1.3rem;
+            font-size: 1.7rem;
         }
         .file-field input[type="file"] {
             display: none;
@@ -244,6 +247,36 @@
             font-style: italic;
             letter-spacing: 0.01em;
         }
+        .preview-image {
+            margin-top:-35px !important;
+            width: 120px;
+            height: 150px;
+            margin: 0 auto;
+            border-radius: 9999px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1.5px solid color-mix(in srgb, var(--accent-1) 20%, transparent);
+        }
+
+        .preview-image img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .comment-highlight {
+            padding: 1rem 1.1rem;
+            border-radius: 18px;
+            border: 2px solid color-mix(in srgb, var(--accent-1) 55%, transparent);
+            background: color-mix(in srgb, var(--accent-1) 12%, rgba(255, 255, 255, 0.7));
+            box-shadow: 0 18px 60px -55px rgba(0, 0, 0, 0.25);
+        }
+
+        .comment-highlight textarea {
+            min-height: 150px;
+        }
+
         textarea {
             width: 100%;
             border-radius: 12px;
@@ -283,6 +316,16 @@
             letter-spacing: 0.05em;
             text-transform: uppercase;
             font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+        }
+
+        .upload-icon {
+            font-size: 1.7rem;
+            line-height: 1;
+            transform: translateY(-0.05em);
         }
         button[type="submit"]:hover,
         button[type="submit"]:focus-visible {
@@ -299,17 +342,17 @@
     <div class="card">
         <h1>{{ event.name }}</h1>
         <div class="divider"></div>
-        <p class="subtitle">
+         <!--<p class="subtitle">
                 {{ event.upload_page_subtitle|default:"Ossz meg egy különleges pillanatot az ifjú párral." }}
         </p>
 
-        {% if messages %}
+       {% if messages %}
             <div class="messages">
                 {% for message in messages %}
                     <div class="message {{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             </div>
-        {% endif %}
+        {% endif %} -->
 
         {% if form.non_field_errors %}
             <div class="errors">
@@ -320,35 +363,52 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
-            <div class="file-field">
-                {{ form.image }}
-                <label for="id_image">
-                    <span>📷</span>
-                    <span>Válassz fényképet</span>
-                </label>
-                {% if form.image.errors %}
-                    <div class="errors">
-                        {{ form.image.errors|striptags }}
-                    </div>
-                {% endif %}
-                <!-- <p class="file-hint">Max 15MB · JPG, PNG vagy HEIC · Tökéletes mobilról való feltöltéshez</p> -->
-            </div>
+            {% if photo %}
+                <input type="hidden" name="photo_id" value="{{ photo.id }}">
+                <input type="hidden" name="step" value="2">
 
-            <div>
-                {{ form.comment }}
-                {% if form.comment.errors %}
-                    <div class="errors">
-                        {{ form.comment.errors|striptags }}
-                    </div>
-                {% endif %}
-            </div>
+                <div class="preview-image">
+                    <img src="{{ photo.image.url }}" alt="Feltöltött fénykép">
+                </div>
 
-            <button type="submit">Osszd meg az emlékedet</button>
+                <div class="comment-highlight">
+                    {{ form.comment }}
+                    {% if form.comment.errors %}
+                        <div class="errors">
+                            {{ form.comment.errors|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" aria-label="Feltöltés">
+                    <span class="upload-icon" aria-hidden="true">⤴</span>
+                    <span>Feltöltés</span>
+                </button>
+            {% else %}
+                <div class="file-field">
+                    {{ form.image }}
+                    <label for="id_image">
+                        <span>📷</span>
+                        <span>Válassz fényképet</span>
+                    </label>
+                    {% if form.image.errors %}
+                        <div class="errors">
+                            {{ form.image.errors|striptags }}
+                        </div>
+                    {% endif %}
+                    <!-- <p class="file-hint">Max 15MB · JPG, PNG vagy HEIC · Tökéletes mobilról való feltöltéshez</p> -->
+                </div>
+
+               
+                {# No visible button: we submit the form automatically on file selection. #}
+                <button type="submit" style="display:none;">Tovább</button>
+            {% endif %}
         </form>
-        <p class="back-home">
-            <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
-        </p>
     </div>
+
+    <p class="back-home">
+        <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+    </p>
 
     <script>
         const fileInput = document.getElementById('id_image');
@@ -360,6 +420,13 @@
                 if (file) {
                     const fileName = file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name;
                     label.querySelector('span:nth-child(2)').textContent = `Kiválasztva: ${fileName}`;
+
+                    // Step 1: auto-submit immediately after image selection.
+                    const form = fileInput.closest('form');
+                    if (form && !form.dataset.autosubmitted) {
+                        form.dataset.autosubmitted = 'true';
+                        form.submit();
+                    }
                 } else {
                     label.querySelector('span:nth-child(2)').textContent = 'Válassz fényképet';
                 }

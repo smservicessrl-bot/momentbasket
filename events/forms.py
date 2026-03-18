@@ -35,3 +35,22 @@ class PhotoUploadForm(forms.ModelForm):
 
         return image
 
+
+class PhotoCommentForm(forms.ModelForm):
+    """
+    Step 2 form: only allows saving an optional comment.
+    The image is already uploaded in step 1.
+    """
+
+    class Meta:
+        model = Photo
+        fields = ["comment"]
+        widgets = {
+            "comment": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "placeholder": "Írj egy opcionális üzenetet a fényképhez...",
+                }
+            ),
+        }
+
