@@ -17,7 +17,7 @@ from django.views.decorators.http import require_http_methods
 
 from .admin_forms import EventForm, PhotoFormSet
 from .models import Event, Photo
-from .utils import generate_event_qr_code, get_event_base_url_from_request
+from .utils import generate_event_qr_code
 
 
 def is_staff_user(user):
@@ -225,8 +225,7 @@ def admin_event_generate_qr(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     
     try:
-        base_url = get_event_base_url_from_request(request)
-        generate_event_qr_code(event, base_url=base_url)
+        generate_event_qr_code(event)
         messages.success(request, f'QR code generated for "{event.name}".')
     except Exception as e:
         messages.error(request, f'Failed to generate QR code: {str(e)}')

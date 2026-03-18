@@ -5,12 +5,7 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .models import Event, Photo
-from .utils import (
-    generate_event_qr_code,
-    get_event_base_url_from_request,
-    get_event_qr_paths,
-    read_event_qr_metadata,
-)
+from .utils import generate_event_qr_code, get_event_qr_paths, read_event_qr_metadata
 from .widgets import ColorPickerWidget
 
 
@@ -95,10 +90,9 @@ class EventAdmin(admin.ModelAdmin):
     def generate_qr_codes(self, request, queryset):
         generated = 0
         skipped = 0
-        base_url = get_event_base_url_from_request(request)
         for event in queryset:
             try:
-                generate_event_qr_code(event, base_url=base_url)
+                generate_event_qr_code(event)
                 generated += 1
             except Exception as exc:  # pragma: no cover - defensive
                 skipped += 1

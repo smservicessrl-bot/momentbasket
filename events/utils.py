@@ -5,7 +5,6 @@ import secrets
 from pathlib import Path
 
 from django.conf import settings
-from django.http import HttpRequest
 from django.urls import reverse
 
 
@@ -18,7 +17,7 @@ def get_event_qr_paths(event_slug: str) -> tuple[Path, str]:
 
 def get_event_qr_metadata_path(event_slug: str) -> Path:
     """
-    Sidecar JSON file that stores the UUID and the exact target URL
+    Sidecar JSON file that stores the short UID and the exact target URL
     embedded into the QR code.
     """
     relative_path = Path("qrcodes") / f"{event_slug}.json"
@@ -84,25 +83,8 @@ def generate_event_qr_code(event, base_url: str | None = None) -> Path:
     return qr_image_path
 
 
-def get_event_base_url_from_request(request: HttpRequest) -> str:
-    """
-    Build the base URL to embed into generated QR codes.
-
-    When running on/behind the public domain, we embed the canonical
-    `https://momentbasket.ro` link. On local/Raspberry setups we embed the
-    current host (typically `http://localhost:...`).
-    """
-
-    host = request.get_host().split(":")[0].lower()
-    if host in {"momentbasket.ro", "www.momentbasket.ro"}:
-        return "https://momentbasket.ro"
-
-    # Prefer proxy headers when present, otherwise rely on Django's scheme detection.
-    forwarded_proto = request.META.get("HTTP_X_FORWARDED_PROTO")
-    if forwarded_proto:
-        scheme = forwarded_proto.split(",")[0].strip().lower()
-    else:
-        scheme = "https" if request.is_secure() else "http"
-
-    return f"{scheme}://{request.get_host()}"
+#
+# Base URL for QR code generation comes from `settings.EVENT_BASE_URL`.
+# To use localhost on Raspberry/offline deployments, set `EVENT_BASE_URL`
+# accordingly in the Raspberry environment.
 
