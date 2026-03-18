@@ -20,6 +20,28 @@
             --accent-2: {{ colors.accent_color_2 }};
             {% endwith %}
         }
+        .back-home {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .back-home a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 999px;
+            text-decoration: none;
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.15);
+        }
+        .back-home a:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.2);
+        }
         * {
             box-sizing: border-box;
         }
@@ -316,6 +338,9 @@
 
             <button type="submit">Osszd meg az emlékedet</button>
         </form>
+        <p class="back-home">
+            <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+        </p>
     </div>
 
     <script>

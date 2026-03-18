@@ -8,13 +8,16 @@
     <style>
         :root {
             color-scheme: light;
-            --bg-gradient: linear-gradient(135deg, #f9e0ff 0%, #c8f5ff 50%, #ffe4d6 100%);
-            --card-bg: rgba(255, 255, 255, 0.82);
-            --card-border: rgba(255, 255, 255, 0.6);
-            --text-primary: #2b2d42;
-            --text-muted: #6c7286;
-            --accent: #7254ff;
-            --accent-2: #ff7ca3;
+            --bg-page: radial-gradient(circle at top left, rgba(204, 39, 136, 0.06), transparent 55%), #f5f6fb;
+            --bg-hero: #ffffff;
+            --card-bg: #ffffff;
+            --card-border: #e2e4f0;
+            --text-primary: #101828;
+            --text-muted: #667085;
+            /* Project accent colors */
+            --accent: #CC2788;      /* primary pink */
+            --accent-soft: rgba(204, 39, 136, 0.09);
+            --accent-2: #0E1397;    /* deep blue */
         }
         * {
             box-sizing: border-box;
@@ -23,7 +26,7 @@
             margin: 0;
             min-height: 100vh;
             font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: var(--bg-gradient);
+            background: var(--bg-page);
             color: var(--text-primary);
             line-height: 1.6;
         }
@@ -37,13 +40,56 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 2rem 0;
-            margin-bottom: 3rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1.75rem 0;
+            margin-bottom: 2.25rem;
+            border-bottom: 1px solid rgba(226, 228, 240, 0.9);
         }
         .hero nav {
-            margin-bottom: clamp(2rem, 5vw, 3.5rem);
-            border-bottom-color: rgba(255, 255, 255, 0.35);
+            margin-bottom: clamp(2rem, 5vw, 3rem);
+            border-bottom-color: rgba(226, 228, 240, 0.9);
+        }
+        .nav-toggle {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: 1px solid rgba(226, 228, 240, 0.9);
+            background: rgba(255, 255, 255, 0.7);
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+        }
+        .nav-toggle-icon {
+            position: relative;
+            width: 18px;
+            height: 18px;
+        }
+        .nav-toggle-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 18px;
+            height: 2px;
+            border-radius: 999px;
+            background: var(--text-primary);
+            transform: translateY(-50%);
+            transition: transform 160ms ease, opacity 160ms ease;
+        }
+        .nav-toggle-line--top {
+            transform: translateY(-6px);
+        }
+        .nav-toggle-line--bottom {
+            transform: translateY(4px);
+        }
+        body.nav-open .nav-toggle-line--middle {
+            opacity: 0;
+        }
+        body.nav-open .nav-toggle-line--top {
+            transform: translateY(0) rotate(45deg);
+        }
+        body.nav-open .nav-toggle-line--bottom {
+            transform: translateY(0) rotate(-45deg);
         }
         .logo {
             display: inline-flex;
@@ -57,7 +103,7 @@
             transition: opacity 200ms ease;
         }
         .logo img {
-            height: 40px;
+            height: 50px;
             width: auto;
             display: block;
             object-fit: contain;
@@ -69,7 +115,7 @@
         }
         .nav-links {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.75rem;
             align-items: center;
         }
         .nav-links a {
@@ -77,14 +123,14 @@
             text-decoration: none;
             font-weight: 500;
             font-size: 0.95rem;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+            padding: 0.45rem 0.9rem;
+            border-radius: 999px;
             transition: all 200ms ease;
         }
         .nav-links a:hover,
         .nav-links a:focus {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent);
+            background: var(--accent-soft);
             outline: none;
         }
         .nav-right {
@@ -92,6 +138,12 @@
             align-items: center;
             gap: 1rem;
             flex-wrap: wrap;
+        }
+        .nav-sheet-logo {
+            display: none;
+        }
+        .nav-close {
+            display: none;
         }
         .nav-contact {
             display: flex;
@@ -138,96 +190,151 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 14px;
+            padding: 0.85rem 1.7rem;
+            border-radius: 999px;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #ffffff;
             text-decoration: none;
-            background: linear-gradient(135deg, rgba(114, 84, 255, 0.25), rgba(255, 124, 163, 0.25));
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border: 1px solid transparent;
+            box-shadow: 0 16px 40px -24px rgba(12, 19, 151, 0.7);
             transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
         }
         .btn-primary:hover,
         .btn-primary:focus {
             transform: translateY(-2px);
-            background: linear-gradient(135deg, rgba(114, 84, 255, 0.35), rgba(255, 124, 163, 0.35));
-            box-shadow: 0 15px 25px -18px rgba(43, 45, 66, 0.4);
+            background: linear-gradient(135deg, #e3389b, #141ab0);
+            box-shadow: 0 20px 45px -24px rgba(12, 19, 151, 0.85);
             outline: none;
         }
         .btn-secondary {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 14px;
+            padding: 0.8rem 1.6rem;
+            border-radius: 999px;
             font-weight: 600;
             color: var(--text-primary);
             text-decoration: none;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            transition: transform 160ms ease, box-shadow 160ms ease;
+            background: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
         }
         .btn-secondary:hover,
         .btn-secondary:focus {
             transform: translateY(-2px);
-            box-shadow: 0 15px 25px -18px rgba(43, 45, 66, 0.3);
+            box-shadow: 0 15px 25px -18px rgba(15, 23, 42, 0.4);
+            background-color: #ffffff;
             outline: none;
         }
-        /* Hero Section - full viewport */
+        /* Hero Section */
         .hero {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            min-height: 100dvh;
+            min-height: 80vh;
             width: 100%;
-            text-align: center;
-            padding: 0 clamp(1rem, 5vw, 2rem) clamp(3rem, 8vw, 6rem);
+            text-align: left;
+            padding: 0 clamp(1rem, 5vw, 2rem) clamp(3rem, 8vw, 5rem);
             padding-top: clamp(1rem, 3vw, 2rem);
             margin-bottom: 0;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            position: relative;
+            background: var(--bg-hero);
             box-sizing: border-box;
         }
-        .hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.5) 100%);
-            pointer-events: none;
+        .hero-inner {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            align-items: center;
+            gap: clamp(2rem, 6vw, 4rem);
         }
-        .hero > * {
+        .hero-visual {
             position: relative;
-            z-index: 1;
+            border-radius: 24px;
+            background: #020617;
+            color: #f9fafb;
+            box-shadow: 0 40px 80px -40px rgba(15, 23, 42, 0.85);
+            overflow: hidden;
+        }
+        .hero-visual-heading {
+            position: absolute;
+            left: 1.4rem;
+            top: 1.2rem;
+            z-index: 2;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #e5e7eb;
+        }
+        .hero-visual-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-auto-rows: 120px;
+            grid-auto-flow: dense;
+            gap: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .hero-photo {
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-photo img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: saturate(1.05);
+        }
+        .hero-photo.hero-photo-large {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+        .hero-photo.hero-photo-bottom-right {
+            grid-row: 4;
+        }
+        .hero-visual-pill-row {
+            position: absolute;
+            left: 1.4rem;
+            bottom: 1.2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            font-size: 0.74rem;
+            color: #e5e7eb;
+            z-index: 2;
+        }
+        .hero-visual-pill {
+            padding: 0.32rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.5);
         }
         .hero .hero-content {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             padding: 0 0 clamp(2rem, 5vw, 4rem);
         }
         .hero h1 {
             margin: 0 0 1.5rem;
-            font-weight: 700;
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
-            letter-spacing: -0.03em;
-            line-height: 1.1;
+            font-weight: 800;
+            font-size: clamp(2.75rem, 6vw, 3.75rem);
+            letter-spacing: -0.04em;
+            line-height: 1.05;
         }
         .hero .tagline {
-            margin: 0 auto 2.5rem;
-            max-width: 680px;
-            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            margin: 0 0 2rem;
+            max-width: 540px;
+            font-size: clamp(1.05rem, 2.3vw, 1.3rem);
             color: var(--text-muted);
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .hero-cta {
             display: flex;
             gap: 1rem;
-            justify-content: center;
+            justify-content: flex-start;
             flex-wrap: wrap;
         }
         /* Section Styles */
@@ -344,6 +451,14 @@
             gap: 2rem;
             margin-bottom: 4rem;
         }
+        /* FAQ list overrides: single column, stacked cards */
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
         .use-case-card {
             padding: 2.5rem 2rem;
             border-radius: 22px;
@@ -401,12 +516,14 @@
         /* Demo Badge */
         .demo-badge {
             display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            background: linear-gradient(135deg, rgba(114, 84, 255, 0.15), rgba(255, 124, 163, 0.15));
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(204, 39, 136, 0.12), rgba(14, 19, 151, 0.12));
             color: var(--accent);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
             margin-bottom: 1rem;
         }
         /* Contact Section */
@@ -435,9 +552,10 @@
         }
         .contact-methods {
             display: flex;
-            gap: 1.5rem;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2rem;
             justify-content: center;
-            flex-wrap: wrap;
             margin-top: 2rem;
         }
         .contact-btn {
@@ -492,24 +610,123 @@
             mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/%3E%3Cpolyline points='22,6 12,13 2,6'/%3E%3C/svg%3E");
             -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/%3E%3Cpolyline points='22,6 12,13 2,6'/%3E%3C/svg%3E");
         }
+
+        /* Footer */
+        .site-footer {
+            margin-top: -3rem;
+            padding: 2.5rem 1.5rem 2rem;
+            border-top: 1px solid rgba(226, 228, 240, 0.8);
+            background: #ffffff;
+        }
+        .site-footer-inner {
+            width: min(1200px, 92vw);
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+        .site-footer-brand {
+            font-weight: 600;
+            color: var(--accent-2);
+        }
+        .site-footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .site-footer-links span {
+            opacity: 0.85;
+        }
+        .site-footer-links a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .site-footer-links a:hover,
+        .site-footer-links a:focus {
+            text-decoration: underline;
+        }
         /* Responsive */
         @media (max-width: 768px) {
             nav {
-                flex-direction: column;
-                gap: 1.25rem;
-                padding: 1.5rem 0;
-                margin-bottom: 2rem;
+                gap: 0.75rem;
+                padding: 1.25rem 0 1.1rem;
+                margin-bottom: 1.25rem;
+            }
+            .nav-toggle {
+                display: inline-flex;
             }
             .nav-right {
+                position: fixed;
+                left: 0;
+                right: 0;
+                top: 0;
+                padding: 3.75rem 1rem 1.25rem;
+                border-radius: 0 0 18px 18px;
+                background: rgba(255, 255, 255, 0.98);
+                border-bottom: 1px solid rgba(226, 228, 240, 0.95);
+                box-shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.55);
                 flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+                opacity: 0;
+                pointer-events: none;
+                transform: translateY(-12px);
+                transition: opacity 160ms ease, transform 160ms ease;
+                z-index: 999;
+            }
+            .nav-sheet-logo {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 0.75rem;
+            }
+            .nav-sheet-logo img {
+                height: 42px;
+                width: auto;
+            }
+            .nav-close {
+                position: absolute;
+                top: 0.9rem;
+                right: 0.9rem;
+                width: 32px;
+                height: 32px;
+                border-radius: 999px;
+                border: none;
+                background: transparent;
+                color: var(--text-muted);
+                display: inline-flex;
                 align-items: center;
+                justify-content: center;
+                font-size: 1.3rem;
+                cursor: pointer;
+            }
+            .nav-close:focus-visible {
+                outline: 2px solid var(--accent);
+                outline-offset: 2px;
+            }
+            body.nav-open .nav-right {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
             }
             .nav-links {
                 flex-wrap: wrap;
+                justify-content: stretch;
+            }
+            .nav-links a {
+                width: 100%;
                 justify-content: center;
+                text-align: center;
             }
             .nav-contact {
                 flex-wrap: wrap;
+                justify-content: stretch;
+            }
+            .nav-contact a {
+                width: 100%;
                 justify-content: center;
             }
             .nav-contact .nav-email {
@@ -524,6 +741,12 @@
             .hero-cta .btn-secondary {
                 width: 100%;
                 justify-content: center;
+            }
+            .hero-inner {
+                grid-template-columns: 1fr;
+            }
+            .hero-visual {
+                order: -1;
             }
             .features-grid,
             .use-cases {
@@ -542,39 +765,86 @@
 </head>
 <body>
     <!-- Header (full width: nav + hero) -->
-    <header class="hero" style="background-image: url('{% static "events/events-hero-header.png" %}');">
-        <nav>
-            <a href="{% url 'events:landing-page' %}" class="logo">
-                <img src="{% static 'events/momentbasket-logo.png' %}" alt="Momentbasket" width="40" height="40">
-                <span>Momentbasket</span>
-            </a>
-            <div class="nav-right">
-                <div class="nav-links">
-                    <a href="{% url 'events:landing-page' %}">Kezdőlap</a>
-                    {% if sample_event %}
-                    <a href="{% url 'events:event-upload' slug=sample_event.slug %}">Próbáld Ki</a>
-                    <a href="{% url 'events:event-gallery' slug=sample_event.slug %}">Galéria Megtekintése</a>
-                    {% endif %}
+    <header class="hero">
+        <div class="wrap">
+            <nav>
+                <a href="{% url 'events:landing-page' %}" class="logo">
+                    <img src="{% static 'events/logo.png' %}" alt="Momentbasket" width="100" height="100">
+                </a>
+                <button class="nav-toggle" type="button" aria-label="Navigáció megnyitása">
+                    <span class="nav-toggle-icon" aria-hidden="true">
+                        <span class="nav-toggle-line nav-toggle-line--top"></span>
+                        <span class="nav-toggle-line nav-toggle-line--middle"></span>
+                        <span class="nav-toggle-line nav-toggle-line--bottom"></span>
+                    </span>
+                </button>
+                <div class="nav-right">
+                    <button type="button" class="nav-close" aria-label="Navigáció bezárása">×</button>
+                    <div class="nav-sheet-logo" aria-hidden="true">
+                        <img src="{% static 'events/logo.png' %}" alt="">
+                    </div>
+                    <div class="nav-links">
+                        <a href="{% url 'events:landing-page' %}">Kezdőlap</a>
+                        {% if sample_event %}
+                        <a href="{% url 'events:event-upload' slug=sample_event.slug %}">Próbáld Ki</a>
+                        <a href="{% url 'events:event-gallery' slug=sample_event.slug %}">Galéria Megtekintése</a>
+                        {% endif %}
+                    </div>
+                    <div class="nav-contact">
+                        <a href="mailto:info@smdata.dev" class="nav-email" aria-label="Email">info@smdata.dev</a>
+                        <a href="https://wa.me/40741755325" target="_blank" rel="noopener noreferrer" class="nav-whatsapp" aria-label="WhatsApp">WhatsApp</a>
+                    </div>
                 </div>
-                <div class="nav-contact">
-                    <a href="mailto:info@momentbasket.com" class="nav-email" aria-label="Email">info@momentbasket.com</a>
-                    <a href="https://wa.me/36123456789" target="_blank" rel="noopener noreferrer" class="nav-whatsapp" aria-label="WhatsApp">WhatsApp</a>
+            </nav>
+            <div class="hero-inner">
+                <div class="hero-content">
+                    <span class="demo-badge">Professzionális Demo</span>
+                    <h1>Oszd Meg Az Esemény Pillanatait Egyszerűen</h1>
+                    <p class="tagline">
+                        Gyűjtsd össze a vendégeid fotóit és videóit egyetlen, gyönyörű digitális albumban. Csak egy QR kódra és pár érintésre van szükség – nincs alkalmazás, nincs regisztráció.
+                    </p>
+                    <div class="hero-cta">
+                        {% if sample_event %}
+                        <a href="{% url 'events:event-upload' slug=sample_event.slug %}" class="btn-primary">Próbáld Ki Élőben</a>
+                        <a href="{% url 'events:event-gallery' slug=sample_event.slug %}" class="btn-secondary">Minta Galéria Megtekintése</a>
+                        {% else %}
+                        <a href="{% url 'events:landing-page' %}" class="btn-primary">Kezdjük El</a>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-        </nav>
-        <div class="hero-content">
-            <span class="demo-badge">Professzionális Demo</span>
-            <h1>Alakítsd Át Eseményeidet<br>Azonnali Fotógalériákkal</h1>
-            <p class="tagline">
-                Egy teljes körű fotógyűjtő platform fotósok, eseményszervezők és kreatív szakemberek számára. Engedd meg vendégeidnek, hogy azonnal feltöltsék a fotókat QR kóddal—nincs szükség alkalmazásra.
-            </p>
-            <div class="hero-cta">
-                {% if sample_event %}
-                <a href="{% url 'events:event-upload' slug=sample_event.slug %}" class="btn-primary">Próbáld Ki Élőben</a>
-                <a href="{% url 'events:event-gallery' slug=sample_event.slug %}" class="btn-secondary">Minta Galéria Megtekintése</a>
-                {% else %}
-                <a href="{% url 'events:landing-page' %}" class="btn-primary">Kezdjük El</a>
-                {% endif %}
+                <div class="hero-visual" aria-hidden="true">
+                    <div class="hero-visual-grid">
+                        <div class="hero-photo hero-photo-large">
+                            <img src="/media/photos/teszt-event/kari-bjorn-photography-Cz94emNSfo8-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo">
+                            <img src="/media/photos/teszt-event/fotografo-samuel-cruz-3VFnBc1Aml8-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo">
+                            <img src="/media/photos/teszt-event/curated-lifestyle-yDFuSDSFJsM-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo">
+                            <img src="/media/photos/teszt-event/getty-images-XDOb-zgT8GY-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo">
+                            <img src="/media/photos/teszt-event/getty-images-VR5fBtXaztc-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo hero-photo-large">
+                            <img src="/media/photos/teszt-event/getty-images-7FiXjfCdiJk-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo">
+                            <img src="/media/photos/teszt-event/anita-austvika-9pMCC1kvX8M-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo hero-photo-bottom-right">
+                            <img src="/media/photos/teszt-event/curated-lifestyle-OryCwxeW1pI-unsplash.jpg" alt="">
+                        </div>
+                        <div class="hero-photo">
+                            <img src="/media/photos/teszt-event/jakob-owens-nCegMtCFWOU-unsplash.jpg" alt="">
+                        </div>
+                    </div>
+                    <div class="hero-visual-heading">Valódi pillanatok a vendégektől</div>
+                    
+                </div>
             </div>
         </div>
     </header>
@@ -583,147 +853,86 @@
         <!-- Key Features -->
         <section>
             <div class="section-header">
-                <h2>Minden, Amire Szükséged Van</h2>
-                <p>Egyszerű, elegáns és emlékezetes pillanatokra tervezve</p>
+                <h2>Egy este, tele vendégfotókkal</h2>
+                <p>Esküvőkön, céges esteken és bulikon minden pillanat egy közös, azonnal frissülő galériába érkezik.</p>
             </div>
+
             <div class="features-grid">
                 <div class="feature-card">
-                    <span class="feature-icon icon-upload"></span>
-                    <h3>Azonnali Fotófeltöltés</h3>
-                    <p>A vendégek közvetlenül telefonjukról feltölthetik a fotókat. Nincs szükség alkalmazás telepítésre—csak egy egyszerű, gyönyörű webes felület, amely bármilyen eszközön működik.</p>
+                    <img src="/media/photos/teszt-event/getty-images-VR5fBtXaztc-unsplash.jpg"
+                         alt="Esküvői vendégek fotóznak"
+                         style="width:100%;height:180px;object-fit:cover;border-radius:14px;margin-bottom:1.25rem;">
+                    <h3>Vendégfotók egy helyen</h3>
+                    <p>Mindenki a saját telefonjával fotózhat, a képek pedig azonnal bekerülnek az esemény galériájába.</p>
                 </div>
+
                 <div class="feature-card">
-                    <span class="feature-icon icon-gallery"></span>
-                    <h3>Valós Idejű Galéria</h3>
-                    <p>Nézd, ahogy az esemény galériád valós időben növekszik a fotók feltöltésével. Gyönyörű, reszponzív dizájn, amely bármilyen képernyőn csodálatosan néz ki.</p>
+                    <img src="/media/photos/teszt-event/jakob-owens-nCegMtCFWOU-unsplash.jpg"
+                         alt="Pár és vendégek ünnepelnek"
+                         style="width:100%;height:180px;object-fit:cover;border-radius:14px;margin-bottom:1.25rem;">
+                    <h3>Nincs app, csak egy QR</h3>
+                    <p>A vendégek egy QR kóddal csatlakoznak – nincs letöltés, nincs regisztráció, csak fotózás.</p>
                 </div>
+
                 <div class="feature-card">
-                    <span class="feature-icon icon-qr"></span>
-                    <h3>QR Kód Megosztás</h3>
-                    <p>Megkapod az egyedi QR kódot, amelyet megjeleníthetsz a helyszínen vagy digitálisan megoszthatsz. A vendégek beolvassák és feltöltik—ennyire egyszerű.</p>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon icon-palette"></span>
-                    <h3>Teljes Személyre Szabás</h3>
-                    <p>Személyre szabhatod minden eseményt egyedi színekkel, nevekkel és üzenetekkel. Tegyed minden eseményt egyedivé és a stílusodhoz illővé.</p>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon icon-server"></span>
-                    <h3>Offline Működés</h3>
-                    <p>Tökéletesen működik offline Raspberry Pi-n vagy helyi hálózatokon. Nincs szükség internetkapcsolatra az esemény során.</p>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon icon-camera"></span>
-                    <h3>Professzionális Minőség</h3>
-                    <p>Magas minőségű képkezelés automatikus optimalizálással. A fotóid automatikusan a legjobban néznek ki.</p>
+                    <img src="/media/photos/teszt-event/anita-austvika-9pMCC1kvX8M-unsplash.jpg"
+                         alt="Stílusos esküvői dekoráció"
+                         style="width:100%;height:180px;object-fit:cover;border-radius:14px;margin-bottom:1.25rem;">
+                    <h3>Minden eseményedre</h3>
+                    <p>Esküvőtől a csapatépítőig: személyre szabott színek, szövegek és borítók a saját stílusodhoz.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Use Cases -->
         <section>
             <div class="section-header">
-                <h2>Tökéletes Mert</h2>
-                <p>Ideális azoknak a szakembereknek, akik emlékezetes élményeket teremtenek</p>
+                <h2>Hogyan működik?</h2>
+                <p>Három egyszerű lépés, hogy az eseményed tele legyen közös emlékekkel.</p>
             </div>
-            <div class="use-cases">
-                <div class="use-case-card">
-                    <h3>📸 Fotósok</h3>
-                    <p>Ajánld meg ügyfeleidnek az azonnali fotógyűjtő megoldást. Hozz létre márkás galériákat esküvőkre, vállalati eseményekre és különleges alkalmakra. Engedd meg a vendégeknek, hogy hozzájáruljanak a saját perspektívájukkal, miközben te a tökéletes felvételekre koncentrálsz.</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">1</div>
+                    <h3>Állítsd be az eseményt</h3>
+                    <p>Megadod az esemény nevét, dátumát és stílusát, mi pedig elkészítjük a márkázott, vendégkész galériát.</p>
                 </div>
-                <div class="use-case-card">
-                    <h3>🎉 Eseményszervezők</h3>
-                    <p>Fokozd eseményeidet az azonnali fotómegosztással. Tökéletes esküvőkre, születésnapokra, vállalati összejövetelekre és ünnepekre. Vegyél részt vendégeidben, és hozz létre tartós emlékeket, amelyeket azonnal elérhetnek.</p>
+                <div class="feature-card">
+                    <div class="feature-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">2</div>
+                    <h3>Oszd meg a QR kódot</h3>
+                    <p>A vendégek a helyszínen kitett QR kóddal vagy linkkel csatlakoznak – alkalmazás és regisztráció nélkül.</p>
                 </div>
-                <div class="use-case-card">
-                    <h3>💼 Vállalati Események</h3>
-                    <p>Professzionális fotógyűjtés konferenciákra, csapatépítésekre, termékbemutatókra és vállalati ünnepekre. Márkás galériák, amelyek tükrözik a vállalat stílusát és értékeit.</p>
-                </div>
-                <div class="use-case-card">
-                    <h3>🎓 Oktatási Intézmények</h3>
-                    <p>Rögzíts iskolai eseményeket, ballagásokat, sporteseményeket és tevékenységeket. Engedd meg a diákoknak, szülőknek és személyzetnek, hogy hozzájáruljanak fotókkal az átfogó eseményemlékek létrehozásához.</p>
-                </div>
-                <div class="use-case-card">
-                    <h3>🏨 Helyszínek és Szállodák</h3>
-                    <p>Ajánld meg ügyfeleidnek a prémium fotómegosztási élményt. Fokozd szolgáltatási ajánlatodat márkás galériákkal, amelyeket a vendégek az esemény alatt és után is elérhetnek.</p>
-                </div>
-                <div class="use-case-card">
-                    <h3>🎨 Kreatív Szakemberek</h3>
-                    <p>A művészek, tervezők és kreatív ügynökségek használhatják ezt a platformot kiállításokra, bemutatókra és ügyfél eseményekre. Mutasd be munkáidat, miközben gyűjted a vendégek hozzájárulásait.</p>
+                <div class="feature-card">
+                    <div class="feature-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">3</div>
+                    <h3>Élvezd az élő galériát</h3>
+                    <p>Minden feltöltött fotó és videó azonnal megjelenik a közös galériában, amit később egy kattintással letölthetsz.</p>
                 </div>
             </div>
         </section>
 
-        <!-- How It Works -->
         <section>
             <div class="section-header">
-                <h2>Hogyan Működik</h2>
-                <p>Egyszerű folyamat a beállítástól a galériáig</p>
+                <h2>Gyakran Ismételt Kérdések</h2>
+                <p>Rövid válaszok a legfontosabb kérdésekre az eseményfotó-megosztással kapcsolatban.</p>
             </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon" style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">1</div>
-                    <h3>Esemény Beállítása</h3>
-                    <p>Mi kezeljük a technikai beállítást, személyre szabást és QR kód generálást. Te csak megadsz az esemény részleteit és a márkajelzési preferenciákat.</p>
+            <div class="faq-list">
+                <div class="use-case-card">
+                    <h3>Vendégeknek kell bármit telepíteni?</h3>
+                    <p>Nem. A vendégek csak beolvassák a QR kódot vagy megnyitják a linket, és már tölthetik is fel a fotókat és videókat a böngészőből.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">2</div>
-                    <h3>QR Kód Megkapása</h3>
-                    <p>Megkapod az egyedi QR kódot, amelyet megjeleníthetsz a helyszínen vagy digitálisan megoszthatsz vendégeiddel.</p>
+                <div class="use-case-card">
+                    <h3>Ki látja a feltöltött képeket?</h3>
+                    <p>A galériát csak azok érik el, akiknél megosztod a linket vagy a QR kódot. Az eseményed nincs nyilvánosan listázva, így az emlékek a meghívottak között maradnak.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">3</div>
-                    <h3>Vendégek Feltöltése</h3>
-                    <p>A vendégek beolvassák a QR kódot és azonnal feltöltik a fotóikat. Nincs szükség fiókra vagy alkalmazásra—csak beolvassák, fényképeznek és megosztanak.</p>
+                <div class="use-case-card">
+                    <h3>Mi történik az esemény után?</h3>
+                    <p>Az esemény vége után is elérhető marad a galéria. Egy kattintással le tudod tölteni az összes fotót, vagy továbbra is megoszthatod a linket a vendégekkel.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">4</div>
-                    <h3>Élő Galéria</h3>
-                    <p>Nézd, ahogy a galériád valós időben feltöltődik. Minden fotó automatikusan rendezve és gyönyörűen megjelenítve.</p>
+                <div class="use-case-card">
+                    <h3>Használható többnapos eseményre is?</h3>
+                    <p>Igen. A résztvevők a teljes időtartam alatt ugyanarra a galériára töltenek fel, így minden pillanat egy helyen gyűlik össze – az első welcome drinktől az utolsó táncig.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">5</div>
-                    <h3>Letöltés és Megosztás</h3>
-                    <p>Bármikor hozzáférhetsz az összes fotóhoz. Töltsd le a teljes gyűjteményt vagy oszd meg a galéria linkjét ügyfeleiddel és vendégeiddel.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon" style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">6</div>
-                    <h3>Folyamatos Támogatás</h3>
-                    <p>Folyamatos támogatást nyújtunk és segíthetünk több eseményben is. Koncentrálj a mesterségedre, miközben mi kezeljük a technológiát.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Benefits -->
-        <section>
-            <div class="section-header">
-                <h2>Miért Válaszd a Momentbasket-et</h2>
-                <p>Professzionális funkciók, amelyek különbséget jelentenek</p>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3>Nincs Technikai Gond</h3>
-                    <p>Mi kezeljük az összes beállítást, hostingot és technikai részletet. Egy működő megoldást kapsz anélkül, hogy a szerverekről vagy kódról kellene aggódnod.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Márkás Élmény</h3>
-                    <p>Minden galéria teljesen személyre szabható a színeiddel, márkajelzéseddel és üzeneteiddel. Hozz létre egy összefüggő élményt, amely illeszkedik a stílusodhoz.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Vendégbarát</h3>
-                    <p>Nincs alkalmazás letöltés, nincs fiók létrehozás. A vendégek egyszerűen beolvassák és feltöltik—a részvétel könnyű és növeli az elköteleződést.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Megbízható és Gyors</h3>
-                    <p>Teljesítményre és megbízhatóságra építve. A galériáid gyorsan betöltődnek és zökkenőmentesen működnek, még több száz fotó esetén is.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Adatvédelmi Fókusz</h3>
-                    <p>Szabályozd, ki férhet hozzá a galériáidhoz. A fotók biztonságosan tárolódnak és igényeid szerint kezelhetők.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Skálázható Megoldás</h3>
-                    <p>Működik intim összejöveteleken és nagy eseményeken egyaránt. A platform skálázódik az igényeidhez, akár 10, akár 10 000 fotóról van szó.</p>
+                <div class="use-case-card">
+                    <h3>Működik internet nélkül is?</h3>
+                    <p>Igen. A rendszert Raspberry Pi-re vagy helyi hálózatra telepítve teljesen offline is tudod használni, így gyenge vagy instabil internet mellett is gond nélkül gyűjtheted a vendégfotókat.</p>
                 </div>
             </div>
         </section>
@@ -747,23 +956,57 @@
             <h2>Lépj Velünk Kapcsolatba</h2>
             <p>Kérdésed van vagy segítségre van szükséged? Szívesen segítünk!</p>
             <div class="contact-methods">
-                <a href="https://wa.me/36123456789" target="_blank" rel="noopener noreferrer" class="contact-btn contact-btn-whatsapp">
+                <a href="mailto:info@smdata.dev" style="display:block; margin-bottom:0.9rem; font-size:0.98rem; font-weight:600; color:var(--text-primary); background:rgba(255,255,255,0.8); padding:0.55rem 1.1rem; border-radius:999px; box-shadow:0 10px 25px -18px rgba(43,45,66,0.45); text-decoration:none;">
+                    info@smdata.dev
+                </a>
+                <a href="https://wa.me/40741755325" target="_blank" rel="noopener noreferrer" class="contact-btn contact-btn-whatsapp">
                     <span class="contact-icon icon-message"></span>
                     <span>WhatsApp</span>
-                </a>
-                <a href="mailto:info@momentbasket.com" class="contact-btn contact-btn-email">
-                    <span class="contact-icon icon-mail"></span>
-                    <span>Email</span>
                 </a>
             </div>
         </section>
 
-        <!-- Footer -->
-        <footer>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
-                &copy; 2024 Momentbasket. Professzionális fotógaléria platform eseményekhez.
-            </p>
-        </footer>
     </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <div class="site-footer-brand">
+                    <img src="{% static 'events/logo.png' %}" alt="Momentbasket" style="height: 36px; width: auto; display: block; margin-bottom: 0.4rem;">
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0.25rem 0 0;">
+                    Gyűjtsd össze vendégeid legjobb pillanatait egy helyen. 
+                </p>
+            </div>
+            <div class="site-footer-links">
+                <span>&copy; 2026 Minden jog fenntartva</span>
+                <span>•</span>
+                <span>Események: esküvők, céges rendezvények, bulik</span>
+            </div>
+        </div>
+    </footer>
 </body>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggle = document.querySelector(".nav-toggle");
+        const closeBtn = document.querySelector(".nav-close");
+
+        if (toggle) {
+            toggle.addEventListener("click", function () {
+                const isOpen = document.body.classList.toggle("nav-open");
+                toggle.setAttribute("aria-label", isOpen ? "Navigáció bezárása" : "Navigáció megnyitása");
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener("click", function () {
+                document.body.classList.remove("nav-open");
+                if (toggle) {
+                    toggle.setAttribute("aria-label", "Navigáció megnyitása");
+                }
+            });
+        }
+    });
+</script>
 </html>
