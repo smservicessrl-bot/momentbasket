@@ -53,6 +53,18 @@ def generate_event_qr_code(event, base_url: str | None = None) -> Path:
     if not base_url:
         raise ValueError("EVENT_BASE_URL must be configured.")
 
+    # If someone runs the server from localhost but still wants QR codes to
+    # point to the public domain, replace localhost-ish base URLs by default.
+    # Raspberry/offline can explicitly opt into localhost QR generation via
+    # MOMENTBASKET_QR_USE_LOCALHOST.
+    base_url_lower = base_url.lower()
+    is_localhostish = base_url_lower.startswith("http://localhost") or base_url_lower.startswith(
+        "http://127.0.0.1"
+    ) or base_url_lower.startswith("https://localhost") or base_url_lower.startswith("http://0.0.0.0")
+
+    if is_localhostish and not settings.MOMENTBASKET_QR_USE_LOCALHOST:
+        base_url = "https://momentbasket.ro"
+
     upload_path = reverse("events:event-upload", kwargs={"slug": event.slug})
     # Short UID (8 digits) to keep the embedded link compact.
     # This is generated randomly; collisions are unlikely for typical event usage.
