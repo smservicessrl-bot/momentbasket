@@ -1,4 +1,5 @@
 import os
+import uuid
 from pathlib import Path
 
 from django.db import models
@@ -36,6 +37,7 @@ class Event(models.Model):
     accent_color_2 = models.CharField(max_length=7, blank=True, help_text="Accent gradient color 2 (hex code, e.g., #ff89b3)")
     text_primary_color = models.CharField(max_length=7, blank=True, help_text="Primary text color (hex code, e.g., #2b2d42)")
     text_muted_color = models.CharField(max_length=7, blank=True, help_text="Muted text color (hex code, e.g., #6c7286)")
+    gallery_uid = models.CharField(max_length=8, blank=True, db_index=True)
 
     class Meta:
         ordering = ("name",)
@@ -63,6 +65,11 @@ class Event(models.Model):
             "text_primary_color": self.text_primary_color or "#2b2d42",
             "text_muted_color": self.text_muted_color or "#6c7286",
         }
+
+    def save(self, *args, **kwargs):
+        if not self.gallery_uid:
+            self.gallery_uid = uuid.uuid4().hex[:8].upper()
+        super().save(*args, **kwargs)
 
 
 class Photo(models.Model):

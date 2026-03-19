@@ -148,21 +148,42 @@ def event_gallery(request: HttpRequest, slug: str) -> HttpResponse:
         {
             "event": event,
             "photos": photos,
+            "is_customer_gallery": False,
         },
     )
 
 
-def event_gallery_download(request: HttpRequest, slug: str) -> HttpResponse:
-    """Public download of all event photos and comments as ZIP."""
+def customer_gallery(request: HttpRequest, slug: str, uid: str) -> HttpResponse:
+    """Customer gallery view protected by event UID."""
     try:
-        event = Event.objects.get(slug=slug)
+        event = Event.objects.get(slug=slug, gallery_uid__iexact=uid)
+    except Event.DoesNotExist as exc:
+        raise Http404("Event not found.") from exc
+
+    photos = event.photos.select_related("event").order_by("-uploaded_at")
+
+    return render(
+        request,
+        "events/gallery.html",
+        {
+            "event": event,
+            "photos": photos,
+            "is_customer_gallery": True,
+        },
+    )
+
+
+def customer_gallery_download(request: HttpRequest, slug: str, uid: str) -> HttpResponse:
+    """Download event photos/comments from customer gallery."""
+    try:
+        event = Event.objects.get(slug=slug, gallery_uid__iexact=uid)
     except Event.DoesNotExist as exc:
         raise Http404("Event not found.") from exc
 
     photos = event.photos.order_by("uploaded_at")
     if not photos.exists():
         messages.warning(request, "No photos are available for download yet.")
-        return redirect("events:event-gallery", slug=event.slug)
+        return redirect("events:customer-gallery", slug=event.slug, uid=uid)
 
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:

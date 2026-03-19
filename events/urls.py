@@ -28,7 +28,8 @@ urlpatterns = [
     path("e/<slug:slug>/upload/", views.event_upload, name="event-upload"),
     path("e/<slug:slug>/thanks/", views.upload_success, name="event-upload-success"),
     path("e/<slug:slug>/gallery/", views.event_gallery, name="event-gallery"),
-    path("e/<slug:slug>/gallery/download/", views.event_gallery_download, name="event-gallery-download"),
+    path("e/<slug:slug>/customer-gallery/<str:uid>/", views.customer_gallery, name="customer-gallery"),
+    path("e/<slug:slug>/customer-gallery/<str:uid>/download/", views.customer_gallery_download, name="customer-gallery-download"),
     
     # Admin URLs
     path("admin-panel/login/", AdminLoginView.as_view(), name="admin-login"),

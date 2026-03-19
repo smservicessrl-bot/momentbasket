@@ -110,7 +110,11 @@ class EventAdmin(admin.ModelAdmin):
         if not obj or not obj.slug:
             return "Save the event to generate the gallery URL."
 
-        gallery_path = reverse("events:event-gallery", kwargs={"slug": obj.slug})
+        gallery_uid = obj.gallery_uid or ""
+        gallery_path = reverse(
+            "events:customer-gallery",
+            kwargs={"slug": obj.slug, "uid": gallery_uid},
+        )
         absolute_gallery_url = f"{settings.EVENT_BASE_URL.rstrip('/')}{gallery_path}"
         return format_html(
             '<a href="{0}" target="_blank" rel="noopener">{0}</a>',

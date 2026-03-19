@@ -394,11 +394,21 @@
 </head>
 <body>
     <header>
-        <h1>{{ event.name }} Galéria</h1>
+        <h1>
+            {{ event.name }}
+            {% if is_customer_gallery %}
+                Ügyfél Galéria
+            {% else %}
+                Galéria
+            {% endif %}
+        </h1>
         <span>{{ photos|length }} megosztott pillanat</span>
         <div class="header-actions">
-            <a class="header-btn" href="{% url 'events:event-gallery-download' slug=event.slug %}">Letöltés ZIP + kommentek</a>
-            <a class="header-btn secondary" href="{% url 'events:event-upload' slug=event.slug %}">Feltöltés</a>
+            {% if is_customer_gallery %}
+                <a class="header-btn" href="{% url 'events:customer-gallery-download' slug=event.slug uid=event.gallery_uid %}">Letöltés ZIP + kommentek</a>
+            {% else %}
+                <a class="header-btn secondary" href="{% url 'events:event-upload' slug=event.slug %}">Feltöltés</a>
+            {% endif %}
         </div>
     </header>
 
@@ -546,9 +556,11 @@
         <p class="empty">Még nincsenek fényképek. Amikor a vendégek elkezdenek megosztani, azonnal megjelennek itt.</p>
     {% endif %}
 
-    <a class="upload-float" href="{% url 'events:event-upload' slug=event.slug %}" aria-label="Újabb kép feltöltése">
-        <span class="upload-icon" aria-hidden="true">⤴</span>
-        <span>Újabb kép feltöltése</span>
-    </a>
+    {% if not is_customer_gallery %}
+        <a class="upload-float" href="{% url 'events:event-upload' slug=event.slug %}" aria-label="Újabb kép feltöltése">
+            <span class="upload-icon" aria-hidden="true">⤴</span>
+            <span>Újabb kép feltöltése</span>
+        </a>
+    {% endif %}
 </body>
 </html>

@@ -72,10 +72,18 @@
             </td>
         </tr>
         <tr>
-            <th>Gallery URL</th>
+            <th>Guest Gallery URL</th>
             <td>
                 <a href="{% url 'events:event-gallery' slug=event.slug %}" target="_blank">
                     {{ request.scheme }}://{{ request.get_host }}{% url 'events:event-gallery' slug=event.slug %}
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <th>Customer Gallery URL</th>
+            <td>
+                <a href="{% url 'events:customer-gallery' slug=event.slug uid=event.gallery_uid %}" target="_blank">
+                    {{ request.scheme }}://{{ request.get_host }}{% url 'events:customer-gallery' slug=event.slug uid=event.gallery_uid %}
                 </a>
             </td>
         </tr>
