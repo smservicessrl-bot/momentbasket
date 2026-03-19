@@ -100,6 +100,9 @@
         <a href="{% url 'events:admin-download-event-data' event.id %}" class="btn btn-success">
             📥 Download All Photos & Comments
         </a>
+        <a href="{% url 'events:admin-gallery-import' %}?event={{ event.id }}" class="btn btn-info">
+            📤 Import Offline Gallery
+        </a>
         <form method="post" action="{% url 'events:admin-event-delete' event.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this event? This action cannot be undone.');">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">Delete Event</button>

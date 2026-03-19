@@ -345,6 +345,9 @@
                 <a href="{% url 'events:admin-event-list' %}" class="nav-item {% if 'admin-event' in request.resolver_match.url_name %}active{% endif %}">
                     📅 Events
                 </a>
+                <a href="{% url 'events:admin-gallery-import' %}" class="nav-item {% if request.resolver_match.url_name == 'admin-gallery-import' %}active{% endif %}">
+                    📤 Import Galleries
+                </a>
                 <a href="{% url 'admin:index' %}" class="nav-item">
                     ⚙️ Django Admin
                 </a>

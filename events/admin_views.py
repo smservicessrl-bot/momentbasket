@@ -8,6 +8,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView, LogoutView
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -15,7 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .admin_forms import EventForm, PhotoFormSet
+from .admin_forms import EventForm, GalleryImportForm, PhotoFormSet
 from .models import Event, Photo
 from .utils import generate_event_qr_code
 
@@ -99,6 +100,77 @@ def admin_event_list(request):
     }
     
     return render(request, 'events/admin/event_list.html', context)
+
+
+@login_required
+@user_passes_test(is_staff_user)
+@require_http_methods(["GET", "POST"])
+def admin_gallery_import(request):
+    """Import an offline-exported gallery ZIP into an existing event."""
+    if request.method == "POST":
+        form = GalleryImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            event = form.cleaned_data["event"]
+            uploaded_zip = form.cleaned_data["gallery_zip"]
+
+            imported_count = 0
+            skipped_count = 0
+
+            try:
+                with zipfile.ZipFile(uploaded_zip) as archive:
+                    comments_by_filename = {}
+                    if "comments.csv" in archive.namelist():
+                        comments_csv = archive.read("comments.csv").decode("utf-8", errors="replace")
+                        reader = csv.DictReader(StringIO(comments_csv))
+                        for row in reader:
+                            filename = (row.get("Filename") or "").strip()
+                            if filename:
+                                comments_by_filename[filename] = (row.get("Comment") or "").strip()
+
+                    photo_members = [
+                        name
+                        for name in archive.namelist()
+                        if name.startswith("photos/") and not name.endswith("/")
+                    ]
+
+                    for member_name in photo_members:
+                        try:
+                            file_bytes = archive.read(member_name)
+                        except Exception:
+                            skipped_count += 1
+                            continue
+
+                        member_filename = os.path.basename(member_name)
+                        # Export format uses "0001_original.jpg"; use original part for comment lookup.
+                        filename_for_comment = member_filename.split("_", 1)[1] if "_" in member_filename else member_filename
+                        comment = comments_by_filename.get(filename_for_comment, "")
+
+                        photo = Photo(event=event, comment=comment)
+                        photo.image.save(filename_for_comment, ContentFile(file_bytes), save=False)
+                        photo.save()
+                        imported_count += 1
+            except zipfile.BadZipFile:
+                messages.error(request, "Invalid ZIP file. Please upload a valid exported gallery ZIP.")
+            except Exception as exc:
+                messages.error(request, f"Failed to import gallery: {exc}")
+            else:
+                if imported_count:
+                    messages.success(
+                        request,
+                        f"Imported {imported_count} photo(s) into '{event.name}'."
+                        + (f" Skipped {skipped_count} file(s)." if skipped_count else ""),
+                    )
+                else:
+                    messages.warning(request, "No photos were imported from the ZIP file.")
+                return redirect("events:admin-event-detail", event_id=event.id)
+    else:
+        initial_event_id = request.GET.get("event")
+        initial = {}
+        if initial_event_id and initial_event_id.isdigit():
+            initial["event"] = int(initial_event_id)
+        form = GalleryImportForm(initial=initial)
+
+    return render(request, "events/admin/gallery_import.html", {"form": form})
 
 
 @login_required

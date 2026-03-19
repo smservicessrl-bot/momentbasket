@@ -1,0 +1,50 @@
+{% extends "events/admin/base.html" %}
+
+{% block title %}Import Gallery{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>Import Offline Gallery</h2>
+    <p>Upload an exported ZIP from your offline Raspberry/local instance and attach it to an event.</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Gallery ZIP Import</h3>
+    </div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.event.id_for_label }}">Event</label>
+            {{ form.event }}
+            {% if form.event.help_text %}
+                <p class="form-help">{{ form.event.help_text }}</p>
+            {% endif %}
+            {% if form.event.errors %}
+                <div class="alert alert-error" style="margin-top: 0.5rem;">{{ form.event.errors|striptags }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.gallery_zip.id_for_label }}">Gallery ZIP</label>
+            {{ form.gallery_zip }}
+            {% if form.gallery_zip.help_text %}
+                <p class="form-help">{{ form.gallery_zip.help_text }}</p>
+            {% endif %}
+            {% if form.gallery_zip.errors %}
+                <div class="alert alert-error" style="margin-top: 0.5rem;">{{ form.gallery_zip.errors|striptags }}</div>
+            {% endif %}
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Import Gallery</button>
+            <a href="{% url 'events:admin-event-list' %}" class="btn btn-secondary">Back to Events</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

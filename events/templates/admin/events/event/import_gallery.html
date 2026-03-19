@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Import offline gallery ZIP</h1>
+    <p><strong>Event:</strong> {{ event.name }}</p>
+    <p>Upload an exported ZIP that contains <code>photos/</code> and optional <code>comments.csv</code>.</p>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top: 1rem;">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <div class="form-row">
+                <label for="id_gallery_zip"><strong>Gallery ZIP:</strong></label>
+                <input id="id_gallery_zip" name="gallery_zip" type="file" accept=".zip,application/zip" required>
+            </div>
+        </fieldset>
+        <div class="submit-row">
+            <input type="submit" value="Import gallery" class="default">
+            <a href="{% url 'admin:events_event_change' event.pk %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

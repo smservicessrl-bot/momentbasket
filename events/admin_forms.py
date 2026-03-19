@@ -178,3 +178,17 @@ PhotoFormSet = inlineformset_factory(
     can_delete=True,
     fields=['image', 'comment']
 )
+
+
+class GalleryImportForm(forms.Form):
+    """Upload an exported gallery ZIP and attach it to an event."""
+
+    event = forms.ModelChoiceField(
+        queryset=Event.objects.order_by("-id"),
+        widget=forms.Select(attrs={"class": "form-control"}),
+        help_text="Choose the event that should receive the imported gallery.",
+    )
+    gallery_zip = forms.FileField(
+        widget=forms.FileInput(attrs={"class": "form-control", "accept": ".zip,application/zip"}),
+        help_text="ZIP exported from offline instance (photos + comments.csv).",
+    )

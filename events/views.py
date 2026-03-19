@@ -1,5 +1,12 @@
+import csv
+import json
+import os
+import zipfile
+from io import BytesIO, StringIO
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -143,6 +150,65 @@ def event_gallery(request: HttpRequest, slug: str) -> HttpResponse:
             "photos": photos,
         },
     )
+
+
+def event_gallery_download(request: HttpRequest, slug: str) -> HttpResponse:
+    """Public download of all event photos and comments as ZIP."""
+    try:
+        event = Event.objects.get(slug=slug)
+    except Event.DoesNotExist as exc:
+        raise Http404("Event not found.") from exc
+
+    photos = event.photos.order_by("uploaded_at")
+    if not photos.exists():
+        messages.warning(request, "No photos are available for download yet.")
+        return redirect("events:event-gallery", slug=event.slug)
+
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for idx, photo in enumerate(photos, 1):
+            if photo.image and default_storage.exists(photo.image.name):
+                try:
+                    with default_storage.open(photo.image.name, "rb") as image_file:
+                        original_filename = os.path.basename(photo.image.name)
+                        zip_filename = f"photos/{idx:04d}_{original_filename}"
+                        zip_file.writestr(zip_filename, image_file.read())
+                except Exception:
+                    continue
+
+        csv_buffer = StringIO()
+        csv_writer = csv.writer(csv_buffer)
+        csv_writer.writerow(["Photo Number", "Filename", "Comment", "Uploaded At", "Uploader IP"])
+        for idx, photo in enumerate(photos, 1):
+            original_filename = os.path.basename(photo.image.name) if photo.image else f"photo_{idx}.jpg"
+            csv_writer.writerow(
+                [
+                    idx,
+                    original_filename,
+                    photo.comment or "",
+                    photo.uploaded_at.strftime("%Y-%m-%d %H:%M:%S") if photo.uploaded_at else "",
+                    str(photo.uploader_ip) if photo.uploader_ip else "",
+                ]
+            )
+        zip_file.writestr("comments.csv", csv_buffer.getvalue().encode("utf-8"))
+
+        metadata = {
+            "event": {
+                "name": event.name,
+                "slug": event.slug,
+                "start_time": event.start_time.isoformat() if event.start_time else None,
+                "end_time": event.end_time.isoformat() if event.end_time else None,
+            },
+            "total_photos": photos.count(),
+            "exported_at": timezone.now().isoformat(),
+        }
+        zip_file.writestr("metadata.json", json.dumps(metadata, indent=2).encode("utf-8"))
+
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+    safe_filename = event.slug.replace(" ", "_")
+    response["Content-Disposition"] = f'attachment; filename="{safe_filename}_gallery.zip"'
+    return response
 
 
 def event_index(request: HttpRequest) -> HttpResponse:

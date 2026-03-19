@@ -13,6 +13,7 @@ from .admin_views import (
     admin_event_generate_qr,
     admin_event_list,
     admin_event_toggle_active,
+    admin_gallery_import,
 )
 
 app_name = "events"
@@ -27,6 +28,7 @@ urlpatterns = [
     path("e/<slug:slug>/upload/", views.event_upload, name="event-upload"),
     path("e/<slug:slug>/thanks/", views.upload_success, name="event-upload-success"),
     path("e/<slug:slug>/gallery/", views.event_gallery, name="event-gallery"),
+    path("e/<slug:slug>/gallery/download/", views.event_gallery_download, name="event-gallery-download"),
     
     # Admin URLs
     path("admin-panel/login/", AdminLoginView.as_view(), name="admin-login"),
@@ -40,5 +42,6 @@ urlpatterns = [
     path("admin-panel/events/<int:event_id>/toggle-active/", admin_event_toggle_active, name="admin-event-toggle-active"),
     path("admin-panel/events/<int:event_id>/generate-qr/", admin_event_generate_qr, name="admin-event-generate-qr"),
     path("admin-panel/events/<int:event_id>/download/", admin_download_event_data, name="admin-download-event-data"),
+    path("admin-panel/galleries/import/", admin_gallery_import, name="admin-gallery-import"),
 ]
 

@@ -1,8 +1,15 @@
+import csv
+import os
+import zipfile
+from io import StringIO
 from pathlib import Path
 
 from django.conf import settings
 from django.contrib import admin, messages
-from django.urls import reverse
+from django.core.files.base import ContentFile
+from django.http import HttpResponseRedirect
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils.html import format_html
 
 from .models import Event, Photo
@@ -17,7 +24,12 @@ class EventAdmin(admin.ModelAdmin):
     search_fields = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     ordering = ("name",)
-    readonly_fields = ("qr_code_preview", "download_event_data_button")
+    readonly_fields = (
+        "qr_code_preview",
+        "customer_gallery_url",
+        "download_event_data_button",
+        "import_gallery_button",
+    )
     actions = ("generate_qr_codes",)
     
     # Color fields that should use the color picker widget
@@ -55,8 +67,11 @@ class EventAdmin(admin.ModelAdmin):
         ("QR Code", {
             "fields": ("qr_code_preview",)
         }),
+        ("Customer Gallery", {
+            "fields": ("customer_gallery_url",)
+        }),
         ("Downloads", {
-            "fields": ("download_event_data_button",)
+            "fields": ("download_event_data_button", "import_gallery_button")
         }),
     )
 
@@ -91,6 +106,19 @@ class EventAdmin(admin.ModelAdmin):
 
     qr_code_preview.short_description = "Event QR code"
 
+    def customer_gallery_url(self, obj):
+        if not obj or not obj.slug:
+            return "Save the event to generate the gallery URL."
+
+        gallery_path = reverse("events:event-gallery", kwargs={"slug": obj.slug})
+        absolute_gallery_url = f"{settings.EVENT_BASE_URL.rstrip('/')}{gallery_path}"
+        return format_html(
+            '<a href="{0}" target="_blank" rel="noopener">{0}</a>',
+            absolute_gallery_url,
+        )
+
+    customer_gallery_url.short_description = "Customer gallery URL"
+
     def download_event_data_button(self, obj):
         if not obj or not obj.pk:
             return "Save the event before downloading photos and comments."
@@ -101,6 +129,109 @@ class EventAdmin(admin.ModelAdmin):
         )
 
     download_event_data_button.short_description = "Event export"
+
+    def import_gallery_button(self, obj):
+        if not obj or not obj.pk:
+            return "Save the event before importing an offline gallery ZIP."
+
+        return format_html(
+            '<a class="button" href="{}">Import offline gallery ZIP</a>',
+            reverse("admin:events_event_import_gallery", args=[obj.pk]),
+        )
+
+    import_gallery_button.short_description = "Offline import"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<path:object_id>/import-gallery/",
+                self.admin_site.admin_view(self.import_gallery_view),
+                name="events_event_import_gallery",
+            ),
+        ]
+        return custom_urls + urls
+
+    def import_gallery_view(self, request, object_id):
+        event = self.get_object(request, object_id)
+        if event is None:
+            self.message_user(request, "Event not found.", level=messages.ERROR)
+            return HttpResponseRedirect(reverse("admin:events_event_changelist"))
+
+        if request.method == "POST":
+            gallery_zip = request.FILES.get("gallery_zip")
+            if not gallery_zip:
+                self.message_user(request, "Please choose a ZIP file to import.", level=messages.ERROR)
+                return HttpResponseRedirect(
+                    reverse("admin:events_event_import_gallery", args=[event.pk])
+                )
+
+            imported_count = 0
+            skipped_count = 0
+
+            try:
+                with zipfile.ZipFile(gallery_zip) as archive:
+                    comments_by_filename = {}
+                    if "comments.csv" in archive.namelist():
+                        comments_csv = archive.read("comments.csv").decode("utf-8", errors="replace")
+                        reader = csv.DictReader(StringIO(comments_csv))
+                        for row in reader:
+                            filename = (row.get("Filename") or "").strip()
+                            if filename:
+                                comments_by_filename[filename] = (row.get("Comment") or "").strip()
+
+                    photo_members = [
+                        name
+                        for name in archive.namelist()
+                        if name.startswith("photos/") and not name.endswith("/")
+                    ]
+
+                    for member_name in photo_members:
+                        try:
+                            file_bytes = archive.read(member_name)
+                        except Exception:
+                            skipped_count += 1
+                            continue
+
+                        member_filename = os.path.basename(member_name)
+                        filename_for_comment = (
+                            member_filename.split("_", 1)[1]
+                            if "_" in member_filename
+                            else member_filename
+                        )
+                        comment = comments_by_filename.get(filename_for_comment, "")
+
+                        photo = Photo(event=event, comment=comment)
+                        photo.image.save(
+                            filename_for_comment,
+                            ContentFile(file_bytes),
+                            save=False,
+                        )
+                        photo.save()
+                        imported_count += 1
+            except zipfile.BadZipFile:
+                self.message_user(request, "Invalid ZIP file.", level=messages.ERROR)
+            except Exception as exc:
+                self.message_user(request, f"Import failed: {exc}", level=messages.ERROR)
+            else:
+                if imported_count:
+                    message = f"Imported {imported_count} photo(s) into '{event.name}'."
+                    if skipped_count:
+                        message += f" Skipped {skipped_count} file(s)."
+                    self.message_user(request, message, level=messages.SUCCESS)
+                else:
+                    self.message_user(request, "No photos were imported from the ZIP file.", level=messages.WARNING)
+
+            return HttpResponseRedirect(reverse("admin:events_event_change", args=[event.pk]))
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "original": event,
+            "event": event,
+            "title": f"Import gallery for {event.name}",
+        }
+        return TemplateResponse(request, "admin/events/event/import_gallery.html", context)
 
     def generate_qr_codes(self, request, queryset):
         generated = 0
