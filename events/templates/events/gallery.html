@@ -554,7 +554,7 @@
         <p class="empty">Még nincsenek fényképek. Amikor a vendégek elkezdenek megosztani, azonnal megjelennek itt.</p>
     {% endif %}
 
-    {% if is_customer_gallery %}
+    {% if not is_customer_gallery %}
         <a class="upload-float" href="{% url 'events:event-upload' slug=event.slug %}" aria-label="Újabb kép feltöltése">
             <span class="upload-icon" aria-hidden="true">⤴</span>
             <span>Újabb kép feltöltése</span>
