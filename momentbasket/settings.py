@@ -135,15 +135,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # to point to localhost.
 EVENT_BASE_URL = os.environ.get("EVENT_BASE_URL", "https://momentbasket.ro")
 
-# When true, QR codes keep using a localhost-ish EVENT_BASE_URL (for Raspberry/offline setups).
-# When false (default), localhost EVENT_BASE_URL values are replaced with the public domain
-# so the generated QR always points to https://momentbasket.ro.
-MOMENTBASKET_QR_USE_LOCALHOST = os.environ.get("MOMENTBASKET_QR_USE_LOCALHOST", "").strip().lower() in {
-    "1",
-    "true",
-    "yes",
-    "y",
-}
+# Force QR codes to always embed the public Momentbasket domain.
+# If you need local/Raspberry localhost QR links later, you can reintroduce a flag.
+MOMENTBASKET_QR_USE_LOCALHOST = False
 
 # Authentication
 LOGIN_URL = '/admin-panel/login/'
