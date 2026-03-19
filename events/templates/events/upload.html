@@ -413,9 +413,28 @@
 
     <script>
         const fileInput = document.getElementById('id_image');
-        const label = document.querySelector('label[for="id_image"]');
+        const chooseBtn = document.getElementById('choose-photo');
+        const captureOptionsEl = document.getElementById('capture-options');
+        const selectedFileEl = document.getElementById('selected-file');
+        const phoneBtn = document.getElementById('upload-from-phone');
+        const cameraBtn = document.getElementById('take-picture');
 
-        if (fileInput && label) {
+        function setCapture(mode) {
+            // mode: 'phone' | 'camera'
+            if (!fileInput) return;
+            if (mode === 'camera') {
+                fileInput.setAttribute('capture', 'environment');
+            } else {
+                fileInput.removeAttribute('capture');
+            }
+        }
+
+        function showCaptureOptions(show) {
+            if (!captureOptionsEl) return;
+            captureOptionsEl.style.display = show ? 'flex' : 'none';
+        }
+
+        if (fileInput) {
             // Client-side compression to reduce upload size while keeping good quality.
             // If decoding fails (e.g. some HEIC cases), we fall back to the original file.
             const MAX_DIMENSION_PX = 2000;
@@ -484,11 +503,29 @@
                 }
             }
 
+            showCaptureOptions(false);
+
+            chooseBtn?.addEventListener('click', () => {
+                showCaptureOptions(true);
+            });
+
+            phoneBtn?.addEventListener('click', () => {
+                setCapture('phone');
+                showCaptureOptions(false);
+                fileInput.click();
+            });
+
+            cameraBtn?.addEventListener('click', () => {
+                setCapture('camera');
+                showCaptureOptions(false);
+                fileInput.click();
+            });
+
             fileInput.addEventListener('change', async (event) => {
                 const file = event.target.files[0];
                 if (file) {
                     const fileName = file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name;
-                    label.querySelector('span:nth-child(2)').textContent = `Kiválasztva: ${fileName}`;
+                    if (selectedFileEl) selectedFileEl.textContent = `Kiválasztva: ${fileName}`;
 
                     // Step 1: compress, then auto-submit.
                     const compressed = await compressImageFile(file);
@@ -504,7 +541,8 @@
                         form.submit();
                     }
                 } else {
-                    label.querySelector('span:nth-child(2)').textContent = 'Válassz fényképet';
+                    if (selectedFileEl) selectedFileEl.textContent = 'Nincs kiválasztott fájl';
+                    showCaptureOptions(true);
                 }
             });
         }
