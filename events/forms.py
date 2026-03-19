@@ -22,7 +22,6 @@ class PhotoUploadForm(forms.ModelForm):
         self.fields["image"].widget.attrs.update(
             {
                 "accept": "image/*",
-                "capture": "environment",
             }
         )
 
