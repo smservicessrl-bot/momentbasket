@@ -66,9 +66,16 @@ def generate_event_qr_code(event, base_url: str | None = None) -> Path:
         base_url = "https://momentbasket.ro"
 
     upload_path = reverse("events:event-upload", kwargs={"slug": event.slug})
-    # Short UID (8 digits) to keep the embedded link compact.
-    # This is generated randomly; collisions are unlikely for typical event usage.
-    qr_uid = f"{secrets.randbelow(100_000_000):08d}"
+    # Keep a stable UID for the default demo event, so the same printed QR code
+    # can be reused across presentations. Other events still get random IDs.
+    demo_event_slug = str(getattr(settings, "DEMO_EVENT_SLUG", "bemutato-esemeny"))
+    demo_event_fixed_uid = str(getattr(settings, "DEMO_EVENT_FIXED_UID", "12345678"))
+    if event.slug == demo_event_slug:
+        qr_uid = demo_event_fixed_uid
+    else:
+        # Short UID (8 digits) to keep the embedded link compact.
+        # This is generated randomly; collisions are unlikely for typical event usage.
+        qr_uid = f"{secrets.randbelow(100_000_000):08d}"
     qr_target_url = f"{base_url}{upload_path}?uid={qr_uid}"
 
     qr_image_path, _ = get_event_qr_paths(event.slug)

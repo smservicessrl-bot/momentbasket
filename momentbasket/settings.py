@@ -139,6 +139,11 @@ EVENT_BASE_URL = os.environ.get("EVENT_BASE_URL", "https://momentbasket.ro")
 # If you need local/Raspberry localhost QR links later, you can reintroduce a flag.
 MOMENTBASKET_QR_USE_LOCALHOST = False
 
+# Demo QR settings: the default demo event can keep a stable, fixed UID
+# so you can reuse the same printed QR code for presentations.
+DEMO_EVENT_SLUG = os.environ.get("DEMO_EVENT_SLUG", "bemutato-esemeny")
+DEMO_EVENT_FIXED_UID = os.environ.get("DEMO_EVENT_FIXED_UID", "12345678")
+
 # Authentication
 LOGIN_URL = '/admin-panel/login/'
 
