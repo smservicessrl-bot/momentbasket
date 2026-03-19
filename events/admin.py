@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Event, Photo
@@ -16,7 +17,7 @@ class EventAdmin(admin.ModelAdmin):
     search_fields = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     ordering = ("name",)
-    readonly_fields = ("qr_code_preview",)
+    readonly_fields = ("qr_code_preview", "download_event_data_button")
     actions = ("generate_qr_codes",)
     
     # Color fields that should use the color picker widget
@@ -54,6 +55,9 @@ class EventAdmin(admin.ModelAdmin):
         ("QR Code", {
             "fields": ("qr_code_preview",)
         }),
+        ("Downloads", {
+            "fields": ("download_event_data_button",)
+        }),
     )
 
     def qr_code_preview(self, obj):
@@ -86,6 +90,17 @@ class EventAdmin(admin.ModelAdmin):
         )
 
     qr_code_preview.short_description = "Event QR code"
+
+    def download_event_data_button(self, obj):
+        if not obj or not obj.pk:
+            return "Save the event before downloading photos and comments."
+
+        return format_html(
+            '<a class="button" href="{}">Download all photos & comments</a>',
+            reverse("events:admin-download-event-data", args=[obj.pk]),
+        )
+
+    download_event_data_button.short_description = "Event export"
 
     def generate_qr_codes(self, request, queryset):
         generated = 0
