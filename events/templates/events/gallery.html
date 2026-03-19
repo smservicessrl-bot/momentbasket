@@ -406,8 +406,6 @@
         <div class="header-actions">
             {% if is_customer_gallery %}
                 <a class="header-btn" href="{% url 'events:customer-gallery-download' slug=event.slug uid=event.gallery_uid %}">Letöltés ZIP + kommentek</a>
-            {% else %}
-                <a class="header-btn secondary" href="{% url 'events:event-upload' slug=event.slug %}">Feltöltés</a>
             {% endif %}
         </div>
     </header>
@@ -556,7 +554,7 @@
         <p class="empty">Még nincsenek fényképek. Amikor a vendégek elkezdenek megosztani, azonnal megjelennek itt.</p>
     {% endif %}
 
-    {% if not is_customer_gallery %}
+    {% if is_customer_gallery %}
         <a class="upload-float" href="{% url 'events:event-upload' slug=event.slug %}" aria-label="Újabb kép feltöltése">
             <span class="upload-icon" aria-hidden="true">⤴</span>
             <span>Újabb kép feltöltése</span>
