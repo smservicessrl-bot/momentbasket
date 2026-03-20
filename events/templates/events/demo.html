@@ -407,6 +407,12 @@
             background: linear-gradient(135deg, rgba(114, 84, 255, 0.1), rgba(255, 124, 163, 0.1));
             position: relative;
         }
+
+        /* The "step" icons in the How-it-works section are just numbers.
+           Disable the generic .feature-icon pseudo-element that is used for SVG-mask icons. */
+        .feature-icon.step-icon::before {
+            display: none;
+        }
         .feature-icon::before {
             content: '';
             width: 32px;
@@ -825,7 +831,7 @@
                     <span class="demo-badge">Professzionális Demo</span>
                     <h1>Oszd Meg Az Esemény Pillanatait Egyszerűen</h1>
                     <p class="tagline">
-                        Gyűjtsd össze a vendégeid fotóit és videóit egyetlen, gyönyörű digitális albumban. Csak egy QR kódra és pár érintésre van szükség – nincs alkalmazás, nincs regisztráció.
+                        Gyűjtsd össze a vendégeid fotóit egyetlen, gyönyörű digitális albumban. Csak egy QR kódra és pár kattintásra van szükség – nincs alkalmazás, nincs regisztráció.
                     </p>
                     <div class="hero-cta">
                         {% if sample_event %}
@@ -907,7 +913,7 @@
                          alt="Stílusos esküvői dekoráció"
                          style="width:100%;height:180px;object-fit:cover;border-radius:14px;margin-bottom:1.25rem;">
                     <h3>Minden eseményedre</h3>
-                    <p>Esküvőtől a csapatépítőig: személyre szabott színek, szövegek és borítók a saját stílusodhoz.</p>
+                    <p>Esküvőtől a csapatépítőig: személyre szabott színek és szövegek a saját stílusodhoz.</p>
                 </div>
             </div>
         </section>
@@ -919,19 +925,19 @@
             </div>
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">1</div>
+                    <div class="feature-icon step-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">1</div>
                     <h3>Állítsd be az eseményt</h3>
-                    <p>Megadod az esemény nevét, dátumát és stílusát, mi pedig elkészítjük a márkázott, vendégkész galériát.</p>
+                    <p>Megadod az esemény nevét, dátumát és stílusát, mi pedig elkészítjük a QR kódot és a galériát.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">2</div>
+                    <div class="feature-icon step-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">2</div>
                     <h3>Oszd meg a QR kódot</h3>
                     <p>A vendégek a helyszínen kitett QR kóddal vagy linkkel csatlakoznak – alkalmazás és regisztráció nélkül.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">3</div>
+                    <div class="feature-icon step-icon" style="font-size:1.4rem;font-weight:700;color:var(--accent);">3</div>
                     <h3>Élvezd az élő galériát</h3>
-                    <p>Minden feltöltött fotó és videó azonnal megjelenik a közös galériában, amit később egy kattintással letölthetsz.</p>
+                    <p>Minden feltöltött fotó azonnal megjelenik a közös galériában, amit később egy kattintással letölthetsz.</p>
                 </div>
             </div>
         </section>
@@ -944,7 +950,7 @@
             <div class="faq-list">
                 <div class="use-case-card">
                     <h3>Vendégeknek kell bármit telepíteni?</h3>
-                    <p>Nem. A vendégek csak beolvassák a QR kódot vagy megnyitják a linket, és már tölthetik is fel a fotókat és videókat a böngészőből.</p>
+                    <p>Nem. A vendégek csak beolvassák a QR kódot vagy megnyitják a linket, és már tölthetik is fel a fotókat a böngészőből.</p>
                 </div>
                 <div class="use-case-card">
                     <h3>Ki látja a feltöltött képeket?</h3>
@@ -982,7 +988,7 @@
         <!-- Contact Section -->
         <section class="contact-section">
             <h2>Lépj Velünk Kapcsolatba</h2>
-            <p>Kérdésed van vagy segítségre van szükséged? Szívesen segítünk!</p>
+            <p>Kérdésed van, vagy szeretnél foglalni? Szívesen segítünk!</p>
             <div class="contact-methods">
                 <a href="mailto:info@smdata.dev" style="display:block; margin-bottom:0.9rem; font-size:0.98rem; font-weight:600; color:var(--text-primary); background:rgba(255,255,255,0.8); padding:0.55rem 1.1rem; border-radius:999px; box-shadow:0 10px 25px -18px rgba(43,45,66,0.45); text-decoration:none;">
                     info@smdata.dev
