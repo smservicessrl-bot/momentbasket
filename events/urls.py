@@ -25,6 +25,16 @@ urlpatterns = [
     # Public URLs
     path("demo/", views.demo_page, name="demo-page"),
     path("events/", views.event_index, name="event-index"),
+    path(
+        "u/<slug:channel_slug>/upload/",
+        views.channel_upload,
+        name="channel-upload",
+    ),
+    path(
+        "u/<slug:channel_slug>/thanks/",
+        views.channel_upload_success,
+        name="channel-upload-success",
+    ),
     path("e/<slug:slug>/upload/", views.event_upload, name="event-upload"),
     path("e/<slug:slug>/thanks/", views.upload_success, name="event-upload-success"),
     path("e/<slug:slug>/gallery/", views.event_gallery, name="event-gallery"),

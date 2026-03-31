@@ -415,11 +415,13 @@
 
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
+            {% if uid %}
+            <input type="hidden" name="uid" value="{{ uid }}">
+            {% endif %}
 
             {% if photo %}
                 <input type="hidden" name="photo_id" value="{{ photo.id }}">
                 <input type="hidden" name="step" value="2">
-                <input type="hidden" name="uid" value="{{ uid }}">
 
                 <div class="preview-image">
                     <img src="{{ photo.image.url }}" alt="Feltöltött fénykép">

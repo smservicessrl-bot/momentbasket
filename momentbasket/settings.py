@@ -80,6 +80,9 @@ WSGI_APPLICATION = 'momentbasket.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+#
+# Local: SQLite. Production (e.g. Railway): set DATABASE_URL from the Postgres plugin;
+# Railway injects it automatically when the service is linked.
 
 DATABASES = {
     'default': {
@@ -87,6 +90,14 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+if os.environ.get('DATABASE_URL'):
+    import dj_database_url
+
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 
 # Password validation
@@ -143,6 +154,8 @@ MOMENTBASKET_QR_USE_LOCALHOST = False
 # so you can reuse the same printed QR code for presentations.
 DEMO_EVENT_SLUG = os.environ.get("DEMO_EVENT_SLUG", "bemutato-esemeny")
 DEMO_EVENT_FIXED_UID = os.environ.get("DEMO_EVENT_FIXED_UID", "12345678")
+# Optional: if an UploadChannel uses this slug, QR generation uses DEMO_EVENT_FIXED_UID in the link.
+DEMO_CHANNEL_SLUG = os.environ.get("DEMO_CHANNEL_SLUG", "")
 
 # Authentication
 LOGIN_URL = '/admin-panel/login/'

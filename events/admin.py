@@ -2,8 +2,6 @@ import csv
 import os
 import zipfile
 from io import StringIO
-from pathlib import Path
-
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.files.base import ContentFile
@@ -12,8 +10,8 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 
-from .models import Event, Photo
-from .utils import generate_event_qr_code, get_event_qr_paths, read_event_qr_metadata
+from .models import Event, Photo, UploadChannel
+from .utils import generate_event_qr_code, qr_preview_payload_for_event
 from .widgets import ColorPickerWidget
 
 
@@ -79,16 +77,23 @@ class EventAdmin(admin.ModelAdmin):
         if not obj or not obj.slug:
             return "Save the event to generate a QR code."
 
-        _, qr_url = get_event_qr_paths(obj.slug)
-        qr_file = Path(settings.MEDIA_ROOT) / "qrcodes" / f"{obj.slug}.png"
-
-        if not qr_file.exists():
+        payload = qr_preview_payload_for_event(obj)
+        if not payload:
             return format_html(
-                "No QR code generated yet. Use the “Generate QR code for selected events” admin action."
+                "No QR code yet. Either assign this event as the <strong>current event</strong> on an "
+                "<a href=\"/admin/events/uploadchannel/\">Upload channel</a>, then generate the QR, "
+                "or use the legacy “Generate QR code for selected events” action (slug-based link)."
             )
 
-        metadata = read_event_qr_metadata(obj.slug) or {}
-        upload_url = metadata.get("target_url") or f"{settings.EVENT_BASE_URL.rstrip('/')}{obj.get_absolute_url()}"
+        extra = ""
+        if payload.get("kind") == "channel":
+            extra = format_html(
+                '<p style="font-size:0.85rem;color:#666;margin-top:0.5rem;">'
+                "Reusable upload channel: <strong>{}</strong>. The same printed QR works for future events "
+                "when you point the channel’s current event to a new one."
+                "</p>",
+                payload.get("channel_label", ""),
+            )
 
         return format_html(
             '<div style="display:flex; flex-direction:column; gap:0.75rem;">'
@@ -98,10 +103,12 @@ class EventAdmin(admin.ModelAdmin):
             '<div>Guest upload link:</div>'
             '<code style="display:inline-block; padding:4px 6px; margin-top:4px; background:#f7f7f7; border-radius:4px;">{}</code>'
             '</div>'
+            "{}"
             "</div>",
-            qr_url,
-            qr_url,
-            upload_url,
+            payload["image_url"],
+            payload["download_url"],
+            payload["target_url"],
+            extra,
         )
 
     qr_code_preview.short_description = "Event QR code"
@@ -261,6 +268,16 @@ class EventAdmin(admin.ModelAdmin):
             self.message_user(request, "No QR codes generated.", level=messages.WARNING)
 
     generate_qr_codes.short_description = "Generate QR code for selected events"
+
+
+@admin.register(UploadChannel)
+class UploadChannelAdmin(admin.ModelAdmin):
+    list_display = ("label", "slug", "current_event", "upload_uid")
+    list_filter = ("current_event",)
+    search_fields = ("label", "slug")
+    prepopulated_fields = {"slug": ("label",)}
+    readonly_fields = ("upload_uid",)
+    ordering = ("label",)
 
 
 @admin.register(Photo)

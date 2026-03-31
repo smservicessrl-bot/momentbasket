@@ -1,7 +1,9 @@
 import os
+import secrets
 import uuid
 from pathlib import Path
 
+from django.conf import settings
 from django.db import models
 
 from .validators import validate_photo_image
@@ -69,6 +71,42 @@ class Event(models.Model):
     def save(self, *args, **kwargs):
         if not self.gallery_uid:
             self.gallery_uid = uuid.uuid4().hex[:8].upper()
+        super().save(*args, **kwargs)
+
+
+class UploadChannel(models.Model):
+    """
+    Stable upload entry (QR / link) for a venue, photographer, or designer.
+    The public URL uses `slug` and `upload_uid`, not the event name.
+    Point `current_event` at whichever event should receive uploads from this link.
+    """
+
+    slug = models.SlugField(max_length=100, unique=True)
+    label = models.CharField(
+        max_length=255,
+        help_text="Venue, photographer, or designer (admin only; not used in the public upload URL).",
+    )
+    upload_uid = models.CharField(max_length=8, unique=True, db_index=True, editable=False)
+    current_event = models.ForeignKey(
+        Event,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="upload_channels_as_current",
+    )
+
+    class Meta:
+        ordering = ("label",)
+
+    def __str__(self) -> str:
+        return f"{self.label} ({self.slug})"
+
+    def save(self, *args, **kwargs):
+        if not self.upload_uid:
+            self.upload_uid = f"{secrets.randbelow(100_000_000):08d}"
+        demo_slug = str(getattr(settings, "DEMO_CHANNEL_SLUG", ""))
+        if demo_slug and self.slug == demo_slug:
+            self.upload_uid = str(getattr(settings, "DEMO_EVENT_FIXED_UID", "12345678"))
         super().save(*args, **kwargs)
 
 

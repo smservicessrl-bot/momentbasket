@@ -8,12 +8,13 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from .forms import PhotoCommentForm, PhotoUploadForm
-from .models import Event, Photo
+from .models import Event, Photo, UploadChannel
+from .utils import channel_uid_is_valid
 
 
 def landing_page(request: HttpRequest) -> HttpResponse:
@@ -33,22 +34,37 @@ def get_client_ip(request: HttpRequest) -> str | None:
     return request.META.get("REMOTE_ADDR")
 
 
-def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
-    try:
-        event = Event.objects.get(slug=slug, is_active=True)
-    except Event.DoesNotExist:
-        # Check if event exists but is inactive
-        try:
-            event = Event.objects.get(slug=slug)
-            # Event exists but is inactive
-            return render(request, "events/event_inactive.html", {"event": event})
-        except Event.DoesNotExist:
-            # Event doesn't exist at all
-            raise Http404("Event not found.") from None
-
+def _event_upload_impl(
+    request: HttpRequest,
+    event: Event,
+    *,
+    upload_channel: UploadChannel | None,
+) -> HttpResponse:
     step = request.GET.get("step") or request.POST.get("step")
     photo_id = request.GET.get("photo_id") or request.POST.get("photo_id")
     uid = request.GET.get("uid") or request.POST.get("uid")
+
+    if upload_channel:
+
+        def upload_success_reverse() -> str:
+            return reverse(
+                "events:channel-upload-success",
+                kwargs={"channel_slug": upload_channel.slug},
+            )
+
+        def upload_step_reverse() -> str:
+            return reverse(
+                "events:channel-upload",
+                kwargs={"channel_slug": upload_channel.slug},
+            )
+
+    else:
+
+        def upload_success_reverse() -> str:
+            return reverse("events:event-upload-success", kwargs={"slug": event.slug})
+
+        def upload_step_reverse() -> str:
+            return reverse("events:event-upload", kwargs={"slug": event.slug})
 
     if request.method == "POST":
         # Step 2: comment save (image already exists).
@@ -62,10 +78,7 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
             if form.is_valid():
                 try:
                     form.save()
-                    upload_success_url = reverse(
-                        "events:event-upload-success",
-                        kwargs={"slug": event.slug},
-                    )
+                    upload_success_url = upload_success_reverse()
                     if uid:
                         upload_success_url = f"{upload_success_url}?uid={uid}"
                     return redirect(upload_success_url)
@@ -93,7 +106,7 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
                         "Hiba történt a fénykép mentése során. Kérjük, próbáld újra.",
                     )
                 else:
-                    upload_url = reverse("events:event-upload", kwargs={"slug": event.slug})
+                    upload_url = upload_step_reverse()
                     redirect_url = f"{upload_url}?step=2&photo_id={photo.id}"
                     if uid:
                         redirect_url += f"&uid={uid}"
@@ -110,10 +123,43 @@ def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
             form = PhotoUploadForm()
 
     context = {"event": event, "form": form, "uid": uid}
-    # If step 2 has a photo_id, we may need the preview even after validation errors.
     if photo_id and "photo" in locals():
         context["photo"] = photo
     return render(request, "events/upload.html", context)
+
+
+def event_upload(request: HttpRequest, slug: str) -> HttpResponse:
+    try:
+        event = Event.objects.get(slug=slug, is_active=True)
+    except Event.DoesNotExist:
+        try:
+            event = Event.objects.get(slug=slug)
+            return render(request, "events/event_inactive.html", {"event": event})
+        except Event.DoesNotExist:
+            raise Http404("Event not found.") from None
+
+    return _event_upload_impl(request, event, upload_channel=None)
+
+
+def channel_upload(request: HttpRequest, channel_slug: str) -> HttpResponse:
+    channel = get_object_or_404(UploadChannel, slug=channel_slug)
+    uid = request.GET.get("uid") or request.POST.get("uid")
+    if not channel_uid_is_valid(channel, uid):
+        raise Http404("Invalid or expired upload link.") from None
+
+    event = channel.current_event
+    if not event:
+        return render(
+            request,
+            "events/channel_upload_unconfigured.html",
+            {"channel": channel},
+            status=404,
+        )
+
+    if not event.is_active:
+        return render(request, "events/event_inactive.html", {"event": event})
+
+    return _event_upload_impl(request, event, upload_channel=channel)
 
 
 def upload_success(request: HttpRequest, slug: str) -> HttpResponse:
@@ -128,6 +174,26 @@ def upload_success(request: HttpRequest, slug: str) -> HttpResponse:
         {
             "event": event,
             "uid": request.GET.get("uid"),
+        },
+    )
+
+
+def channel_upload_success(request: HttpRequest, channel_slug: str) -> HttpResponse:
+    channel = get_object_or_404(UploadChannel, slug=channel_slug)
+    uid = request.GET.get("uid")
+    if not channel_uid_is_valid(channel, uid):
+        raise Http404("Invalid or expired upload link.") from None
+
+    event = channel.current_event
+    if not event:
+        raise Http404("Upload not available.") from None
+
+    return render(
+        request,
+        "events/upload_success.html",
+        {
+            "event": event,
+            "uid": uid,
         },
     )
 

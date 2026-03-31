@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from .admin_forms import EventForm, GalleryImportForm, PhotoFormSet
-from .models import Event, Photo
+from .models import Event, Photo, UploadChannel
 from .utils import generate_event_qr_code
 
 
@@ -253,6 +253,7 @@ def admin_event_detail(request, event_id):
         'photos': photos[:50],  # Show first 50
         'photo_count': photo_count,
         'photos_with_comments': photos_with_comments,
+        'upload_channels': UploadChannel.objects.filter(current_event=event).order_by('label'),
     }
     
     return render(request, 'events/admin/event_detail.html', context)
@@ -298,7 +299,20 @@ def admin_event_generate_qr(request, event_id):
     
     try:
         generate_event_qr_code(event)
-        messages.success(request, f'QR code generated for "{event.name}".')
+        channels = UploadChannel.objects.filter(current_event=event)
+        if channels.exists():
+            slugs = ", ".join(c.slug for c in channels)
+            messages.success(
+                request,
+                f'QR code(s) generated for upload channel(s): {slugs}. '
+                f'Event name "{event.name}" appears on the upload and gallery pages only.',
+            )
+        else:
+            messages.success(
+                request,
+                f'Legacy QR code generated for "{event.name}" (slug-based upload URL). '
+                "Assign an upload channel’s current event to this event for a reusable venue/photographer QR.",
+            )
     except Exception as e:
         messages.error(request, f'Failed to generate QR code: {str(e)}')
     

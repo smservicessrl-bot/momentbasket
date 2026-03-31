@@ -64,13 +64,37 @@
             <td>{{ event.couple_names|default:"—" }}</td>
         </tr>
         <tr>
-            <th>Upload URL</th>
+            <th>Upload URL (legacy)</th>
             <td>
                 <a href="{{ event.get_absolute_url }}" target="_blank">
                     {{ request.scheme }}://{{ request.get_host }}{{ event.get_absolute_url }}
                 </a>
+                <div style="font-size:0.85rem;color:var(--text-light);margin-top:0.35rem;">
+                    Slug-based link. Prefer an <strong>upload channel</strong> QR for reusable venue/photographer links.
+                </div>
             </td>
         </tr>
+        {% if upload_channels %}
+        <tr>
+            <th>Upload channels (reusable QR)</th>
+            <td>
+                <ul style="margin:0;padding-left:1.2rem;">
+                    {% for ch in upload_channels %}
+                    <li style="margin-bottom:0.5rem;">
+                        <strong>{{ ch.label }}</strong>
+                        (<code>{{ ch.slug }}</code>) —
+                        <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'events:channel-upload' channel_slug=ch.slug %}?uid={{ ch.upload_uid }}" target="_blank">
+                            open upload link
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div style="font-size:0.85rem;color:var(--text-light);margin-top:0.5rem;">
+                    Guests use the channel URL (or printed QR). Event title on the upload page comes from this event’s name.
+                </div>
+            </td>
+        </tr>
+        {% endif %}
         <tr>
             <th>Guest Gallery URL</th>
             <td>
