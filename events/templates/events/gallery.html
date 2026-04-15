@@ -1,4 +1,4 @@
-{% load static %}
+{% load static tz %}
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -411,13 +411,16 @@
     </header>
 
     {% if photos %}
+        {% if event.slug == 'bemutato-esemeny' %}
+            <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+        {% endif %}
         <section class="grid">
             {% for photo in photos %}
                 <figure class="tile" data-photo-index="{{ forloop.counter0 }}">
-                    <a class="tile-link" href="#" data-photo-url="{{ photo.image.url }}" data-photo-comment="{{ photo.comment|default:'' }}" data-photo-date="{{ photo.uploaded_at|date:'M j, Y H:i' }}" aria-label="Fénykép megtekintése {{ forloop.counter }} a(z) {{ event.name }} eseményből"></a>
+                    <a class="tile-link" href="#" data-photo-url="{{ photo.image.url }}" data-photo-comment="{{ photo.comment|default:'' }}" data-photo-date="{{ photo.uploaded_at|timezone:'Etc/GMT-3'|date:'M j, Y H:i' }}" aria-label="Fénykép megtekintése {{ forloop.counter }} a(z) {{ event.name }} eseményből"></a>
                     <img src="{{ photo.image.url }}" alt="Fénykép a(z) {{ event.name }} eseményről" loading="lazy">
                     <figcaption class="meta">
-                        <time datetime="{{ photo.uploaded_at|date:'c' }}">{{ photo.uploaded_at|date:"M j, H:i" }}</time>
+                        <time datetime="{{ photo.uploaded_at|timezone:'Etc/GMT-3'|date:'c' }}">{{ photo.uploaded_at|timezone:'Etc/GMT-3'|date:"M j, H:i" }}</time>
                         {% if photo.comment %}
                             <span>{{ photo.comment|truncatechars:90 }}</span>
                         {% endif %}
@@ -425,6 +428,9 @@
                 </figure>
             {% endfor %}
         </section>
+        {% if event.slug == 'bemutato-esemeny' %}
+            <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+        {% endif %}
 
         <!-- Carousel Viewer -->
         <div class="carousel-overlay" id="carouselOverlay" role="dialog" aria-label="Képgaléria megjelenítő" aria-modal="true">
@@ -450,7 +456,7 @@
                     {
                         url: "{{ photo.image.url }}",
                         comment: "{{ photo.comment|default:''|escapejs }}",
-                        date: "{{ photo.uploaded_at|date:'M j, Y H:i' }}"
+                        date: "{{ photo.uploaded_at|timezone:'Etc/GMT-3'|date:'M j, Y H:i' }}"
                     }{% if not forloop.last %},{% endif %}
                     {% endfor %}
                 ];
