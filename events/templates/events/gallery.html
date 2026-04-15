@@ -87,6 +87,35 @@
             background: rgba(35, 33, 56, 0.55);
             backdrop-filter: blur(8px);
         }
+        .back-home {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .back-home--top {
+            margin: 0 0 1rem;
+        }
+        .back-home--bottom {
+            margin: 1rem 0 1.5rem;
+        }
+        .back-home a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 999px;
+            text-decoration: none;
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.15);
+        }
+        .back-home a:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.2);
+        }
         .grid {
             /* Masonry-like packing via CSS columns */
             column-count: 3;
@@ -412,7 +441,9 @@
 
     {% if photos %}
         {% if event.slug == 'bemutato-esemeny' %}
-            <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+            <div class="back-home back-home--top">
+                <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+            </div>
         {% endif %}
         <section class="grid">
             {% for photo in photos %}
@@ -429,7 +460,9 @@
             {% endfor %}
         </section>
         {% if event.slug == 'bemutato-esemeny' %}
-            <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+            <div class="back-home back-home--bottom">
+                <a href="{% url 'events:landing-page' %}">← Vissza a főoldalra</a>
+            </div>
         {% endif %}
 
         <!-- Carousel Viewer -->
