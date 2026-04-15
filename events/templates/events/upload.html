@@ -10,8 +10,6 @@
     <style>
         :root {
             {% with colors=event.get_theme_colors %}
-            /* Fixed brand-edge colors disabled:
-               #0E1397 at 0% and #CC2788 at 100% */
             --bg: linear-gradient(
                 135deg,
                 {{ colors.bg_color_1 }} 0%,
@@ -620,4 +618,3 @@
     </script>
 </body>
 </html>
-
