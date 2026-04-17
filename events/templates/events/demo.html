@@ -816,8 +816,8 @@
                     <div class="nav-links">
                         <a href="{% url 'events:landing-page' %}">Kezdőlap</a>
                         {% if sample_event %}
-                        <a href="{% url 'events:event-upload' slug=sample_event.slug %}">Próbáld Ki</a>
-                        <a href="{% url 'events:event-gallery' slug=sample_event.slug %}">Galéria Megtekintése</a>
+                        <a href="{% url 'events:event-upload' slug='bemutato-esemeny' %}">Próbáld Ki</a>
+                        <a href="{% url 'events:event-gallery' slug='bemutato-esemeny' %}">Galéria Megtekintése</a>
                         {% endif %}
                     </div>
                     <div class="nav-contact">
@@ -835,8 +835,8 @@
                     </p>
                     <div class="hero-cta">
                         {% if sample_event %}
-                        <a href="{% url 'events:event-upload' slug=sample_event.slug %}" class="btn-primary">Próbáld Ki Élőben</a>
-                        <a href="{% url 'events:event-gallery' slug=sample_event.slug %}" class="btn-secondary">Minta Galéria Megtekintése</a>
+                        <a href="{% url 'events:event-upload' slug='bemutato-esemeny' %}" class="btn-primary">Próbáld Ki Élőben</a>
+                        <a href="{% url 'events:event-gallery' slug='bemutato-esemeny' %}" class="btn-secondary">Minta Galéria Megtekintése</a>
                         {% else %}
                         <a href="{% url 'events:landing-page' %}" class="btn-primary">Kezdjük El</a>
                         {% endif %}
@@ -977,8 +977,8 @@
             <p>Hozzunk létre valami csodálatosat együtt. Tökéletes esküvőkre, vállalati eseményekre, ünnepekre és minden olyan alkalomra, ahol az emlékek számítanak.</p>
             <div class="cta-buttons">
                 {% if sample_event %}
-                <a href="{% url 'events:event-upload' slug=sample_event.slug %}" class="btn-primary">Próbáld Ki Élőben</a>
-                <a href="{% url 'events:event-gallery' slug=sample_event.slug %}" class="btn-secondary">Minta Galéria Megtekintése</a>
+                <a href="{% url 'events:event-upload' slug='bemutato-esemeny' %}" class="btn-primary">Próbáld Ki Élőben</a>
+                <a href="{% url 'events:event-gallery' slug='bemutato-esemeny' %}" class="btn-secondary">Minta Galéria Megtekintése</a>
                 {% else %}
                 <a href="{% url 'events:landing-page' %}" class="btn-primary">Tudj Meg Többet</a>
                 {% endif %}
