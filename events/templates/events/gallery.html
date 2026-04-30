@@ -423,7 +423,7 @@
             text-align: center;
             position: relative;
             z-index: 1;
-            margin: 0 0 1.1rem;
+            margin: 0 0 4.4rem;
         }
         .brand-footer-link {
             display: inline-flex;
@@ -449,25 +449,6 @@
             font-weight: 500;
         }
 
-        @media (max-width: 520px) {
-            body {
-                padding-bottom: 3rem;
-            }
-            .brand-footer {
-                position: fixed;
-                bottom: 1rem;
-                left: 0;
-                padding-left: 20px;
-                margin: 0;
-                text-align: left;
-                width: auto;
-                max-width: calc(100vw - 6rem);
-                z-index: 998;
-            }
-            .brand-footer-link {
-                align-items: flex-start;
-            }
-        }
     </style>
 </head>
 <body>
@@ -487,7 +468,6 @@
             {% endif %}
         </div>
     </header>
-
     {% if photos %}
         {% if event.slug == 'bemutato-esemeny' %}
             <div class="back-home back-home--top">
