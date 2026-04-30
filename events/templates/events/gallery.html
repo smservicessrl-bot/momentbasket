@@ -419,6 +419,55 @@
                 padding: 1.5rem 1rem;
             }
         }
+        .brand-footer {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            margin: 0 0 1.1rem;
+        }
+        .brand-footer-link {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            text-decoration: none;
+            padding: 0.6rem 1rem 0.7rem;
+            border-radius: 14px;
+            background: none;
+            box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.25);
+        }
+        .brand-footer-link img {
+            width: auto;
+            height: 30px;
+            display: block;
+        }
+        .brand-footer-link span {
+            color: var(--primary);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: none;
+            font-weight: 500;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding-bottom: 3rem;
+            }
+            .brand-footer {
+                position: fixed;
+                bottom: 1rem;
+                left: 0;
+                padding-left: 20px;
+                margin: 0;
+                text-align: left;
+                width: auto;
+                max-width: calc(100vw - 6rem);
+                z-index: 998;
+            }
+            .brand-footer-link {
+                align-items: flex-start;
+            }
+        }
     </style>
 </head>
 <body>
@@ -599,5 +648,10 @@
             <span>Újabb kép feltöltése</span>
         </a>
     {% endif %}
+    <footer class="brand-footer">
+        <a class="brand-footer-link" href="https://momentbasket.ro" target="_blank" rel="noopener noreferrer" aria-label="MomentBasket weboldal">
+            <span>momentbasket.ro</span>
+        </a>
+    </footer>
 </body>
 </html>

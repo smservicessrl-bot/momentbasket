@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -84,6 +85,16 @@
                 radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
+        }
+        .page-content {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
         }
         .card {
             width: min(480px, 95vw);
@@ -394,9 +405,35 @@
                 transform: rotate(360deg);
             }
         }
+        .brand-footer {
+            position: relative;
+            z-index: 1;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .brand-footer-link {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            text-decoration: none;
+            padding: 0.6rem 1rem 0.7rem;
+            border-radius: 14px;
+            background: none;
+            box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.25);
+        }
+       
+        .brand-footer-link span {
+            color: var(--primary);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: none;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
+    <div class="page-content">
     <div class="card">
         <h1>{{ event.name }}</h1>
         <div class="divider"></div>
@@ -478,6 +515,13 @@
         {% endif %}
         <a href="{% url 'events:event-gallery' slug=event.slug %}">Galéria megtekintése</a>
     </p>
+    </div>
+
+    <footer class="brand-footer">
+        <a class="brand-footer-link" href="https://momentbasket.ro" target="_blank" rel="noopener noreferrer" aria-label="MomentBasket weboldal">
+           <span>momentbasket.ro</span>
+        </a>
+    </footer>
 
     <script>
         const uploadForm = document.querySelector('form[enctype="multipart/form-data"]');
