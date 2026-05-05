@@ -2,6 +2,7 @@ import csv
 import os
 import zipfile
 from io import StringIO
+from pathlib import PurePosixPath
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.files.base import ContentFile
@@ -12,6 +13,7 @@ from django.utils.html import format_html
 
 from .models import Event, Photo, UploadChannel
 from .utils import generate_event_qr_code, qr_preview_payload_for_event
+from .validators import DEFAULT_ALLOWED_EXTENSIONS
 from .widgets import ColorPickerWidget
 
 
@@ -163,6 +165,46 @@ class EventAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
+    @staticmethod
+    def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[str, str]]:
+        """
+        Return photo entries from any nested .../photos/ path.
+        Tuple values are (member_name, original_filename_for_comment_lookup).
+        """
+        allowed_exts = {ext.lower() for ext in DEFAULT_ALLOWED_EXTENSIONS}
+        entries: list[tuple[str, str]] = []
+
+        for name in archive.namelist():
+            if name.endswith("/"):
+                continue
+
+            parts = PurePosixPath(name).parts
+            try:
+                photos_idx = parts.index("photos")
+            except ValueError:
+                continue
+
+            if photos_idx == len(parts) - 1:
+                continue
+
+            member_filename = parts[-1]
+            # Skip hidden/system helper files often added by OS zip tools.
+            if member_filename.startswith(".") or member_filename.startswith("._"):
+                continue
+
+            _, ext = os.path.splitext(member_filename.lower())
+            if ext not in allowed_exts:
+                continue
+
+            filename_for_comment = (
+                member_filename.split("_", 1)[1]
+                if "_" in member_filename
+                else member_filename
+            )
+            entries.append((name, filename_for_comment))
+
+        return entries
+
     def import_gallery_view(self, request, object_id):
         event = self.get_object(request, object_id)
         if event is None:
@@ -191,35 +233,23 @@ class EventAdmin(admin.ModelAdmin):
                             if filename:
                                 comments_by_filename[filename] = (row.get("Comment") or "").strip()
 
-                    photo_members = [
-                        name
-                        for name in archive.namelist()
-                        if name.startswith("photos/") and not name.endswith("/")
-                    ]
-
-                    for member_name in photo_members:
+                    photo_entries = self._extract_importable_photo_entries(archive)
+                    for member_name, filename_for_comment in photo_entries:
                         try:
                             file_bytes = archive.read(member_name)
+                            comment = comments_by_filename.get(filename_for_comment, "")
+
+                            photo = Photo(event=event, comment=comment)
+                            photo.image.save(
+                                filename_for_comment,
+                                ContentFile(file_bytes),
+                                save=False,
+                            )
+                            photo.save()
+                            imported_count += 1
                         except Exception:
                             skipped_count += 1
                             continue
-
-                        member_filename = os.path.basename(member_name)
-                        filename_for_comment = (
-                            member_filename.split("_", 1)[1]
-                            if "_" in member_filename
-                            else member_filename
-                        )
-                        comment = comments_by_filename.get(filename_for_comment, "")
-
-                        photo = Photo(event=event, comment=comment)
-                        photo.image.save(
-                            filename_for_comment,
-                            ContentFile(file_bytes),
-                            save=False,
-                        )
-                        photo.save()
-                        imported_count += 1
             except zipfile.BadZipFile:
                 self.message_user(request, "Invalid ZIP file.", level=messages.ERROR)
             except Exception as exc:

@@ -137,9 +137,70 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Media storage configuration:
+# - Local development uses local filesystem media (MEDIA_ROOT).
+# - Production can use any S3-compatible storage (AWS S3, Cloudflare R2, etc.)
+#   by setting AWS_STORAGE_BUCKET_NAME (+ credentials/endpoint vars).
+USE_S3_MEDIA = bool(os.environ.get("AWS_STORAGE_BUCKET_NAME"))
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+if USE_S3_MEDIA:
+    INSTALLED_APPS.append("storages")
+
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+    AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get("AWS_S3_CUSTOM_DOMAIN")
+    AWS_MEDIA_LOCATION = os.environ.get("AWS_MEDIA_LOCATION", "media").strip("/")
+
+    AWS_QUERYSTRING_AUTH = False
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "location": AWS_MEDIA_LOCATION,
+                "default_acl": None,
+                "file_overwrite": False,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_MEDIA_LOCATION}/"
+    elif AWS_S3_ENDPOINT_URL:
+        MEDIA_URL = (
+            f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/{AWS_MEDIA_LOCATION}/"
+        )
+    else:
+        region_part = f".{AWS_S3_REGION_NAME}" if AWS_S3_REGION_NAME else ""
+        MEDIA_URL = (
+            f"https://{AWS_STORAGE_BUCKET_NAME}.s3{region_part}.amazonaws.com/"
+            f"{AWS_MEDIA_LOCATION}/"
+        )
+    MEDIA_ROOT = BASE_DIR / 'media'
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": (
+                "whitenoise.storage.CompressedManifestStaticFilesStorage"
+                if not DEBUG
+                else "django.contrib.staticfiles.storage.StaticFilesStorage"
+            ),
+        },
+    }
 
 # Base URL embedded into generated QR codes.
 # Override on Raspberry/offline deployments if you want the admin preview links

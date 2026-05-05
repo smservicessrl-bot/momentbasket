@@ -22,4 +22,9 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('events.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# Django should only serve local MEDIA files in development.
+# In production with S3/R2, MEDIA_URL points directly to object storage.
+if settings.DEBUG and not getattr(settings, "USE_S3_MEDIA", False):
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
