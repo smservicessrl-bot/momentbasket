@@ -41,13 +41,8 @@ def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[st
             continue
 
         parts = PurePosixPath(name).parts
-        try:
-            photos_idx = parts.index("photos")
-        except ValueError:
-            continue
-
-        if photos_idx == len(parts) - 1:
-            continue
+        lowered_parts = [part.lower() for part in parts]
+        has_photos_segment = "photos" in lowered_parts
 
         member_filename = parts[-1]
         # Skip hidden/system helper files often added by OS zip tools.
@@ -57,6 +52,19 @@ def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[st
         _, ext = os.path.splitext(member_filename.lower())
         if ext not in allowed_exts:
             continue
+
+        if has_photos_segment:
+            photos_idx = lowered_parts.index("photos")
+            if photos_idx == len(parts) - 1:
+                continue
+        else:
+            # Fallback for manually zipped archives where images are not in a photos/ folder.
+            # Keep it strict enough to avoid importing helper/export metadata files.
+            root_name = member_filename.lower()
+            if root_name in {"comments.csv", "metadata.json"}:
+                continue
+            if "__macosx" in lowered_parts:
+                continue
 
         # Exported archives may prefix files as: 0001_original.jpg.
         # Strip only that numeric prefix pattern (do not strip normal underscores).
