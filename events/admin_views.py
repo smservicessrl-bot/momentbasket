@@ -77,6 +77,13 @@ def _normalize_comment_filename(value: str) -> str:
     return os.path.basename((value or "").strip()).lower()
 
 
+def _normalize_filename_stem(value: str) -> str:
+    """Filename without extension, normalized for fallback matching."""
+    name = _normalize_comment_filename(value)
+    stem, _ = os.path.splitext(name)
+    return stem
+
+
 def _find_comments_csv_member(archive: zipfile.ZipFile) -> str | None:
     """Find comments.csv even if ZIP has a top-level folder."""
     for name in archive.namelist():
@@ -85,6 +92,15 @@ def _find_comments_csv_member(archive: zipfile.ZipFile) -> str | None:
         if os.path.basename(name).lower() == "comments.csv":
             return name
     return None
+
+
+def _normalize_csv_row_keys(row: dict) -> dict:
+    """Normalize CSV header keys (strip spaces/BOM, lowercase)."""
+    normalized = {}
+    for key, value in row.items():
+        cleaned_key = str(key or "").strip().lower().lstrip("\ufeff")
+        normalized[cleaned_key] = value
+    return normalized
 
 
 @login_required
@@ -180,36 +196,50 @@ def admin_gallery_import(request):
             try:
                 with zipfile.ZipFile(uploaded_zip) as archive:
                     comments_by_filename = {}
+                    comments_by_stem = {}
                     comments_by_number = {}
                     comments_member = _find_comments_csv_member(archive)
                     if comments_member:
                         comments_csv = archive.read(comments_member).decode("utf-8-sig", errors="replace")
-                        reader = csv.DictReader(StringIO(comments_csv))
+                        sample = comments_csv[:4096]
+                        delimiter = ","
+                        try:
+                            delimiter = csv.Sniffer().sniff(sample, delimiters=",;|\t").delimiter
+                        except Exception:
+                            pass
+                        reader = csv.DictReader(StringIO(comments_csv), delimiter=delimiter)
                         for row in reader:
+                            row = _normalize_csv_row_keys(row)
                             # Accept a few practical header variants to be resilient.
                             filename = (
-                                row.get("Filename")
-                                or row.get("filename")
-                                or row.get("File")
+                                row.get("filename")
                                 or row.get("file")
-                                or row.get("Image")
                                 or row.get("image")
+                                or row.get("photo")
                                 or ""
                             ).strip()
-                            comment_value = (row.get("Comment") or row.get("comment") or "").strip()
+                            comment_value = (
+                                row.get("comment")
+                                or row.get("megjegyzes")
+                                or row.get("megjegyzes")
+                                or row.get("caption")
+                                or ""
+                            ).strip()
                             if filename:
                                 normalized = _normalize_comment_filename(filename)
                                 comments_by_filename[normalized] = comment_value
+                                comments_by_stem[_normalize_filename_stem(normalized)] = comment_value
 
                                 # Also map CSV names like "0001_xxx.jpg" to "xxx.jpg".
                                 prefixed_match = re.match(r"^\d+_(.+)$", normalized)
                                 if prefixed_match:
-                                    comments_by_filename[prefixed_match.group(1)] = comment_value
+                                    stripped = prefixed_match.group(1)
+                                    comments_by_filename[stripped] = comment_value
+                                    comments_by_stem[_normalize_filename_stem(stripped)] = comment_value
 
                             photo_number_raw = (
-                                row.get("Photo Number")
-                                or row.get("photo number")
-                                or row.get("PhotoNumber")
+                                row.get("photo number")
+                                or row.get("photonumber")
                                 or row.get("number")
                                 or ""
                             )
@@ -217,11 +247,14 @@ def admin_gallery_import(request):
                                 comments_by_number[int(str(photo_number_raw).strip())] = comment_value
 
                     photo_entries = _extract_importable_photo_entries(archive)
+                    comments_attached_count = 0
                     for member_name, filename_for_comment, export_index in photo_entries:
                         try:
                             file_bytes = archive.read(member_name)
                             normalized_name = _normalize_comment_filename(filename_for_comment)
                             comment = comments_by_filename.get(normalized_name, "")
+                            if not comment:
+                                comment = comments_by_stem.get(_normalize_filename_stem(normalized_name), "")
                             if not comment and export_index is not None:
                                 comment = comments_by_number.get(export_index, "")
 
@@ -229,6 +262,8 @@ def admin_gallery_import(request):
                             photo.image.save(filename_for_comment, ContentFile(file_bytes), save=False)
                             photo.save()
                             imported_count += 1
+                            if comment:
+                                comments_attached_count += 1
                         except Exception:
                             skipped_count += 1
                             continue
@@ -241,6 +276,7 @@ def admin_gallery_import(request):
                     messages.success(
                         request,
                         f"Imported {imported_count} photo(s) into '{event.name}'."
+                        f" Attached comments to {comments_attached_count} photo(s)."
                         + (f" Skipped {skipped_count} file(s)." if skipped_count else ""),
                     )
                 else:
