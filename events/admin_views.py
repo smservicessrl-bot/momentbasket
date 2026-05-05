@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import re
 import zipfile
 from io import BytesIO, StringIO
 from pathlib import Path, PurePosixPath
@@ -57,14 +58,18 @@ def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[st
         if ext not in allowed_exts:
             continue
 
-        filename_for_comment = (
-            member_filename.split("_", 1)[1]
-            if "_" in member_filename
-            else member_filename
-        )
+        # Exported archives may prefix files as: 0001_original.jpg.
+        # Strip only that numeric prefix pattern (do not strip normal underscores).
+        match = re.match(r"^\d+_(.+)$", member_filename)
+        filename_for_comment = match.group(1) if match else member_filename
         entries.append((name, filename_for_comment))
 
     return entries
+
+
+def _normalize_comment_filename(value: str) -> str:
+    """Normalize filename keys so CSV and ZIP names can be matched reliably."""
+    return os.path.basename((value or "").strip()).lower()
 
 
 @login_required
@@ -164,15 +169,29 @@ def admin_gallery_import(request):
                         comments_csv = archive.read("comments.csv").decode("utf-8", errors="replace")
                         reader = csv.DictReader(StringIO(comments_csv))
                         for row in reader:
-                            filename = (row.get("Filename") or "").strip()
+                            # Accept a few practical header variants to be resilient.
+                            filename = (
+                                row.get("Filename")
+                                or row.get("filename")
+                                or row.get("File")
+                                or row.get("file")
+                                or row.get("Image")
+                                or row.get("image")
+                                or ""
+                            ).strip()
                             if filename:
-                                comments_by_filename[filename] = (row.get("Comment") or "").strip()
+                                comments_by_filename[_normalize_comment_filename(filename)] = (
+                                    row.get("Comment")
+                                    or row.get("comment")
+                                    or ""
+                                ).strip()
 
                     photo_entries = _extract_importable_photo_entries(archive)
                     for member_name, filename_for_comment in photo_entries:
                         try:
                             file_bytes = archive.read(member_name)
-                            comment = comments_by_filename.get(filename_for_comment, "")
+                            normalized_name = _normalize_comment_filename(filename_for_comment)
+                            comment = comments_by_filename.get(normalized_name, "")
 
                             photo = Photo(event=event, comment=comment)
                             photo.image.save(filename_for_comment, ContentFile(file_bytes), save=False)
