@@ -28,13 +28,13 @@ def is_staff_user(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 
-def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[str, str]]:
+def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[str, str, int | None]]:
     """
     Return photo entries from any nested .../photos/ path.
-    Tuple values are (member_name, original_filename_for_comment_lookup).
+    Tuple values are (member_name, original_filename_for_comment_lookup, export_index).
     """
     allowed_exts = {ext.lower() for ext in DEFAULT_ALLOWED_EXTENSIONS}
-    entries: list[tuple[str, str]] = []
+    entries: list[tuple[str, str, int | None]] = []
 
     for name in archive.namelist():
         if name.endswith("/"):
@@ -60,9 +60,14 @@ def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[st
 
         # Exported archives may prefix files as: 0001_original.jpg.
         # Strip only that numeric prefix pattern (do not strip normal underscores).
-        match = re.match(r"^\d+_(.+)$", member_filename)
-        filename_for_comment = match.group(1) if match else member_filename
-        entries.append((name, filename_for_comment))
+        match = re.match(r"^(\d+)_(.+)$", member_filename)
+        if match:
+            export_index = int(match.group(1))
+            filename_for_comment = match.group(2)
+        else:
+            export_index = None
+            filename_for_comment = member_filename
+        entries.append((name, filename_for_comment, export_index))
 
     return entries
 
@@ -70,6 +75,16 @@ def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[st
 def _normalize_comment_filename(value: str) -> str:
     """Normalize filename keys so CSV and ZIP names can be matched reliably."""
     return os.path.basename((value or "").strip()).lower()
+
+
+def _find_comments_csv_member(archive: zipfile.ZipFile) -> str | None:
+    """Find comments.csv even if ZIP has a top-level folder."""
+    for name in archive.namelist():
+        if name.endswith("/"):
+            continue
+        if os.path.basename(name).lower() == "comments.csv":
+            return name
+    return None
 
 
 @login_required
@@ -165,8 +180,10 @@ def admin_gallery_import(request):
             try:
                 with zipfile.ZipFile(uploaded_zip) as archive:
                     comments_by_filename = {}
-                    if "comments.csv" in archive.namelist():
-                        comments_csv = archive.read("comments.csv").decode("utf-8", errors="replace")
+                    comments_by_number = {}
+                    comments_member = _find_comments_csv_member(archive)
+                    if comments_member:
+                        comments_csv = archive.read(comments_member).decode("utf-8-sig", errors="replace")
                         reader = csv.DictReader(StringIO(comments_csv))
                         for row in reader:
                             # Accept a few practical header variants to be resilient.
@@ -179,19 +196,34 @@ def admin_gallery_import(request):
                                 or row.get("image")
                                 or ""
                             ).strip()
+                            comment_value = (row.get("Comment") or row.get("comment") or "").strip()
                             if filename:
-                                comments_by_filename[_normalize_comment_filename(filename)] = (
-                                    row.get("Comment")
-                                    or row.get("comment")
-                                    or ""
-                                ).strip()
+                                normalized = _normalize_comment_filename(filename)
+                                comments_by_filename[normalized] = comment_value
+
+                                # Also map CSV names like "0001_xxx.jpg" to "xxx.jpg".
+                                prefixed_match = re.match(r"^\d+_(.+)$", normalized)
+                                if prefixed_match:
+                                    comments_by_filename[prefixed_match.group(1)] = comment_value
+
+                            photo_number_raw = (
+                                row.get("Photo Number")
+                                or row.get("photo number")
+                                or row.get("PhotoNumber")
+                                or row.get("number")
+                                or ""
+                            )
+                            if str(photo_number_raw).strip().isdigit():
+                                comments_by_number[int(str(photo_number_raw).strip())] = comment_value
 
                     photo_entries = _extract_importable_photo_entries(archive)
-                    for member_name, filename_for_comment in photo_entries:
+                    for member_name, filename_for_comment, export_index in photo_entries:
                         try:
                             file_bytes = archive.read(member_name)
                             normalized_name = _normalize_comment_filename(filename_for_comment)
                             comment = comments_by_filename.get(normalized_name, "")
+                            if not comment and export_index is not None:
+                                comment = comments_by_number.get(export_index, "")
 
                             photo = Photo(event=event, comment=comment)
                             photo.image.save(filename_for_comment, ContentFile(file_bytes), save=False)
