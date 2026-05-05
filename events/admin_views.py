@@ -2,6 +2,7 @@ import csv
 import json
 import os
 import re
+import unicodedata
 import zipfile
 from io import BytesIO, StringIO
 from pathlib import Path, PurePosixPath
@@ -107,6 +108,9 @@ def _normalize_csv_row_keys(row: dict) -> dict:
     normalized = {}
     for key, value in row.items():
         cleaned_key = str(key or "").strip().lower().lstrip("\ufeff")
+        cleaned_key = "".join(
+            ch for ch in unicodedata.normalize("NFKD", cleaned_key) if not unicodedata.combining(ch)
+        )
         normalized[cleaned_key] = value
     return normalized
 
@@ -181,6 +185,13 @@ def _extract_comment_mappings_from_csv(comments_csv: str) -> tuple[dict[str, str
                 comments_by_number[int(number_raw)] = comment_value
 
     return comments_by_filename, comments_by_stem, comments_by_number
+
+
+def _merge_comment_value(current: str, incoming: str) -> str:
+    """Prefer non-empty incoming comment; otherwise keep current value."""
+    incoming = (incoming or "").strip()
+    current = (current or "").strip()
+    return incoming if incoming else current
 
 
 @login_required
@@ -308,12 +319,23 @@ def admin_gallery_import(request):
 
                                 if filename:
                                     normalized = _normalize_comment_filename(filename)
-                                    comments_by_filename.setdefault(normalized, comment_value)
-                                    comments_by_stem.setdefault(
-                                        _normalize_filename_stem(normalized), comment_value
+                                    comments_by_filename[normalized] = _merge_comment_value(
+                                        comments_by_filename.get(normalized, ""), comment_value
                                     )
+                                    stem_key = _normalize_filename_stem(normalized)
+                                    comments_by_stem[stem_key] = _merge_comment_value(
+                                        comments_by_stem.get(stem_key, ""), comment_value
+                                    )
+
                                 if isinstance(number, int):
-                                    comments_by_number.setdefault(number, comment_value)
+                                    comments_by_number[number] = _merge_comment_value(
+                                        comments_by_number.get(number, ""), comment_value
+                                    )
+                                elif str(number).strip().isdigit():
+                                    num = int(str(number).strip())
+                                    comments_by_number[num] = _merge_comment_value(
+                                        comments_by_number.get(num, ""), comment_value
+                                    )
                         except Exception:
                             pass
 

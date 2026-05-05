@@ -1,5 +1,7 @@
 import csv
+import json
 import os
+import re
 import zipfile
 from io import StringIO
 from pathlib import PurePosixPath
@@ -166,26 +168,28 @@ class EventAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     @staticmethod
-    def _extract_importable_photo_entries(archive: zipfile.ZipFile) -> list[tuple[str, str]]:
+    def _extract_importable_photo_entries(
+        archive: zipfile.ZipFile,
+    ) -> list[tuple[str, str, int | None]]:
         """
         Return photo entries from any nested .../photos/ path.
-        Tuple values are (member_name, original_filename_for_comment_lookup).
+        Tuple values are (member_name, original_filename_for_comment_lookup, export_index).
         """
         allowed_exts = {ext.lower() for ext in DEFAULT_ALLOWED_EXTENSIONS}
-        entries: list[tuple[str, str]] = []
+        entries: list[tuple[str, str, int | None]] = []
 
         for name in archive.namelist():
             if name.endswith("/"):
                 continue
 
             parts = PurePosixPath(name).parts
-            try:
-                photos_idx = parts.index("photos")
-            except ValueError:
-                continue
+            lowered_parts = [part.lower() for part in parts]
+            has_photos_segment = "photos" in lowered_parts
 
-            if photos_idx == len(parts) - 1:
-                continue
+            if has_photos_segment:
+                photos_idx = lowered_parts.index("photos")
+                if photos_idx == len(parts) - 1:
+                    continue
 
             member_filename = parts[-1]
             # Skip hidden/system helper files often added by OS zip tools.
@@ -196,14 +200,38 @@ class EventAdmin(admin.ModelAdmin):
             if ext not in allowed_exts:
                 continue
 
-            filename_for_comment = (
-                member_filename.split("_", 1)[1]
-                if "_" in member_filename
-                else member_filename
-            )
-            entries.append((name, filename_for_comment))
+            match = re.match(r"^(\d+)_(.+)$", member_filename)
+            if match:
+                export_index = int(match.group(1))
+                filename_for_comment = match.group(2)
+            else:
+                export_index = None
+                filename_for_comment = member_filename
+            entries.append((name, filename_for_comment, export_index))
 
         return entries
+
+    @staticmethod
+    def _normalize_name(name: str) -> str:
+        return os.path.basename((name or "").strip()).lower()
+
+    @staticmethod
+    def _find_comments_csv_member(archive: zipfile.ZipFile) -> str | None:
+        for name in archive.namelist():
+            if name.endswith("/"):
+                continue
+            if os.path.basename(name).lower() == "comments.csv":
+                return name
+        return None
+
+    @staticmethod
+    def _find_metadata_member(archive: zipfile.ZipFile) -> str | None:
+        for name in archive.namelist():
+            if name.endswith("/"):
+                continue
+            if os.path.basename(name).lower() == "metadata.json":
+                return name
+        return None
 
     def import_gallery_view(self, request, object_id):
         event = self.get_object(request, object_id)
@@ -225,19 +253,54 @@ class EventAdmin(admin.ModelAdmin):
             try:
                 with zipfile.ZipFile(gallery_zip) as archive:
                     comments_by_filename = {}
-                    if "comments.csv" in archive.namelist():
-                        comments_csv = archive.read("comments.csv").decode("utf-8", errors="replace")
-                        reader = csv.DictReader(StringIO(comments_csv))
+                    comments_by_number = {}
+                    comments_member = self._find_comments_csv_member(archive)
+                    if comments_member:
+                        comments_csv = archive.read(comments_member).decode("utf-8-sig", errors="replace")
+                        delimiter = ","
+                        try:
+                            delimiter = csv.Sniffer().sniff(comments_csv[:4096], delimiters=",;|\t").delimiter
+                        except Exception:
+                            pass
+                        reader = csv.DictReader(StringIO(comments_csv), delimiter=delimiter)
                         for row in reader:
-                            filename = (row.get("Filename") or "").strip()
+                            row = {str(k or "").strip().lower(): v for k, v in row.items()}
+                            filename = (
+                                (row.get("filename") or row.get("file") or row.get("image") or "").strip()
+                            )
+                            comment = (row.get("comment") or row.get("caption") or "").strip()
+                            number_raw = (row.get("photo number") or row.get("number") or "").strip()
                             if filename:
-                                comments_by_filename[filename] = (row.get("Comment") or "").strip()
+                                comments_by_filename[self._normalize_name(filename)] = comment
+                            if number_raw.isdigit():
+                                comments_by_number[int(number_raw)] = comment
+
+                    metadata_member = self._find_metadata_member(archive)
+                    if metadata_member:
+                        try:
+                            metadata = json.loads(
+                                archive.read(metadata_member).decode("utf-8", errors="replace")
+                            )
+                            for item in metadata.get("photos", []):
+                                filename = self._normalize_name(str(item.get("filename") or ""))
+                                comment = str(item.get("comment") or "").strip()
+                                number = item.get("number")
+                                if filename and comment and not comments_by_filename.get(filename):
+                                    comments_by_filename[filename] = comment
+                                if isinstance(number, int) and comment and not comments_by_number.get(number):
+                                    comments_by_number[number] = comment
+                        except Exception:
+                            pass
 
                     photo_entries = self._extract_importable_photo_entries(archive)
-                    for member_name, filename_for_comment in photo_entries:
+                    comments_attached = 0
+                    for member_name, filename_for_comment, export_index in photo_entries:
                         try:
                             file_bytes = archive.read(member_name)
-                            comment = comments_by_filename.get(filename_for_comment, "")
+                            normalized_name = self._normalize_name(filename_for_comment)
+                            comment = comments_by_filename.get(normalized_name, "")
+                            if not comment and export_index is not None:
+                                comment = comments_by_number.get(export_index, "")
 
                             photo = Photo(event=event, comment=comment)
                             photo.image.save(
@@ -247,6 +310,8 @@ class EventAdmin(admin.ModelAdmin):
                             )
                             photo.save()
                             imported_count += 1
+                            if comment:
+                                comments_attached += 1
                         except Exception:
                             skipped_count += 1
                             continue
@@ -256,7 +321,10 @@ class EventAdmin(admin.ModelAdmin):
                 self.message_user(request, f"Import failed: {exc}", level=messages.ERROR)
             else:
                 if imported_count:
-                    message = f"Imported {imported_count} photo(s) into '{event.name}'."
+                    message = (
+                        f"Imported {imported_count} photo(s) into '{event.name}'. "
+                        f"Attached comments to {comments_attached} photo(s)."
+                    )
                     if skipped_count:
                         message += f" Skipped {skipped_count} file(s)."
                     self.message_user(request, message, level=messages.SUCCESS)
