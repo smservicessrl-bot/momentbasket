@@ -111,6 +111,78 @@ def _normalize_csv_row_keys(row: dict) -> dict:
     return normalized
 
 
+def _extract_comment_mappings_from_csv(comments_csv: str) -> tuple[dict[str, str], dict[str, str], dict[int, str]]:
+    """Parse comments.csv robustly across delimiters and header variants."""
+    comments_by_filename: dict[str, str] = {}
+    comments_by_stem: dict[str, str] = {}
+    comments_by_number: dict[int, str] = {}
+
+    sample = comments_csv[:4096]
+    delimiter = ","
+    try:
+        delimiter = csv.Sniffer().sniff(sample, delimiters=",;|\t").delimiter
+    except Exception:
+        pass
+
+    reader = csv.DictReader(StringIO(comments_csv), delimiter=delimiter)
+    parsed_structured = False
+    for row in reader:
+        row = _normalize_csv_row_keys(row)
+        filename = (
+            row.get("filename")
+            or row.get("file")
+            or row.get("image")
+            or row.get("photo")
+            or ""
+        ).strip()
+        comment_value = (
+            row.get("comment")
+            or row.get("megjegyzes")
+            or row.get("caption")
+            or ""
+        ).strip()
+        number_raw = (
+            row.get("photo number")
+            or row.get("photonumber")
+            or row.get("number")
+            or ""
+        )
+
+        if filename:
+            normalized = _normalize_comment_filename(filename)
+            comments_by_filename[normalized] = comment_value
+            comments_by_stem[_normalize_filename_stem(normalized)] = comment_value
+            prefixed_match = re.match(r"^\d+_(.+)$", normalized)
+            if prefixed_match:
+                stripped = prefixed_match.group(1)
+                comments_by_filename[stripped] = comment_value
+                comments_by_stem[_normalize_filename_stem(stripped)] = comment_value
+            parsed_structured = True
+
+        if str(number_raw).strip().isdigit():
+            comments_by_number[int(str(number_raw).strip())] = comment_value
+            parsed_structured = True
+
+    # Fallback for malformed headers: use positional columns from exported format.
+    if not parsed_structured:
+        rows = list(csv.reader(StringIO(comments_csv), delimiter=delimiter))
+        for row in rows[1:]:
+            if len(row) < 3:
+                continue
+            number_raw = str(row[0]).strip()
+            filename = str(row[1]).strip()
+            comment_value = str(row[2]).strip()
+
+            if filename:
+                normalized = _normalize_comment_filename(filename)
+                comments_by_filename[normalized] = comment_value
+                comments_by_stem[_normalize_filename_stem(normalized)] = comment_value
+            if number_raw.isdigit():
+                comments_by_number[int(number_raw)] = comment_value
+
+    return comments_by_filename, comments_by_stem, comments_by_number
+
+
 @login_required
 @user_passes_test(is_staff_user)
 def admin_dashboard(request):
@@ -200,6 +272,7 @@ def admin_gallery_import(request):
 
             imported_count = 0
             skipped_count = 0
+            skipped_reasons: list[str] = []
 
             try:
                 with zipfile.ZipFile(uploaded_zip) as archive:
@@ -209,52 +282,55 @@ def admin_gallery_import(request):
                     comments_member = _find_comments_csv_member(archive)
                     if comments_member:
                         comments_csv = archive.read(comments_member).decode("utf-8-sig", errors="replace")
-                        sample = comments_csv[:4096]
-                        delimiter = ","
+                        (
+                            comments_by_filename,
+                            comments_by_stem,
+                            comments_by_number,
+                        ) = _extract_comment_mappings_from_csv(comments_csv)
+
+                    metadata_member = next(
+                        (
+                            name
+                            for name in archive.namelist()
+                            if not name.endswith("/") and os.path.basename(name).lower() == "metadata.json"
+                        ),
+                        None,
+                    )
+                    if metadata_member:
                         try:
-                            delimiter = csv.Sniffer().sniff(sample, delimiters=",;|\t").delimiter
+                            metadata = json.loads(
+                                archive.read(metadata_member).decode("utf-8", errors="replace")
+                            )
+                            for item in metadata.get("photos", []):
+                                filename = str(item.get("filename") or "").strip()
+                                comment_value = str(item.get("comment") or "").strip()
+                                number = item.get("number")
+
+                                if filename:
+                                    normalized = _normalize_comment_filename(filename)
+                                    comments_by_filename.setdefault(normalized, comment_value)
+                                    comments_by_stem.setdefault(
+                                        _normalize_filename_stem(normalized), comment_value
+                                    )
+                                if isinstance(number, int):
+                                    comments_by_number.setdefault(number, comment_value)
                         except Exception:
                             pass
-                        reader = csv.DictReader(StringIO(comments_csv), delimiter=delimiter)
-                        for row in reader:
-                            row = _normalize_csv_row_keys(row)
-                            # Accept a few practical header variants to be resilient.
-                            filename = (
-                                row.get("filename")
-                                or row.get("file")
-                                or row.get("image")
-                                or row.get("photo")
-                                or ""
-                            ).strip()
-                            comment_value = (
-                                row.get("comment")
-                                or row.get("megjegyzes")
-                                or row.get("megjegyzes")
-                                or row.get("caption")
-                                or ""
-                            ).strip()
-                            if filename:
-                                normalized = _normalize_comment_filename(filename)
-                                comments_by_filename[normalized] = comment_value
-                                comments_by_stem[_normalize_filename_stem(normalized)] = comment_value
-
-                                # Also map CSV names like "0001_xxx.jpg" to "xxx.jpg".
-                                prefixed_match = re.match(r"^\d+_(.+)$", normalized)
-                                if prefixed_match:
-                                    stripped = prefixed_match.group(1)
-                                    comments_by_filename[stripped] = comment_value
-                                    comments_by_stem[_normalize_filename_stem(stripped)] = comment_value
-
-                            photo_number_raw = (
-                                row.get("photo number")
-                                or row.get("photonumber")
-                                or row.get("number")
-                                or ""
-                            )
-                            if str(photo_number_raw).strip().isdigit():
-                                comments_by_number[int(str(photo_number_raw).strip())] = comment_value
 
                     photo_entries = _extract_importable_photo_entries(archive)
+                    if not photo_entries:
+                        sample_members = [
+                            os.path.basename(n)
+                            for n in archive.namelist()
+                            if n and not n.endswith("/") and not os.path.basename(n).startswith(".")
+                        ][:8]
+                        allowed_exts_display = ", ".join(sorted(DEFAULT_ALLOWED_EXTENSIONS))
+                        messages.warning(
+                            request,
+                            "No importable images found in ZIP. "
+                            f"Expected files with extensions: {allowed_exts_display}. "
+                            + (f"ZIP sample entries: {', '.join(sample_members)}" if sample_members else ""),
+                        )
                     comments_attached_count = 0
                     for member_name, filename_for_comment, export_index in photo_entries:
                         try:
@@ -272,8 +348,11 @@ def admin_gallery_import(request):
                             imported_count += 1
                             if comment:
                                 comments_attached_count += 1
-                        except Exception:
+                        except Exception as exc:
                             skipped_count += 1
+                            if len(skipped_reasons) < 5:
+                                short_name = os.path.basename(member_name)
+                                skipped_reasons.append(f"{short_name}: {exc}")
                             continue
             except zipfile.BadZipFile:
                 messages.error(request, "Invalid ZIP file. Please upload a valid exported gallery ZIP.")
@@ -288,7 +367,10 @@ def admin_gallery_import(request):
                         + (f" Skipped {skipped_count} file(s)." if skipped_count else ""),
                     )
                 else:
-                    messages.warning(request, "No photos were imported from the ZIP file.")
+                    details = f" Skipped {skipped_count} file(s)." if skipped_count else ""
+                    if skipped_reasons:
+                        details += " Reasons: " + " | ".join(skipped_reasons)
+                    messages.warning(request, "No photos were imported from the ZIP file." + details)
                 return redirect("events:admin-event-detail", event_id=event.id)
     else:
         initial_event_id = request.GET.get("event")
